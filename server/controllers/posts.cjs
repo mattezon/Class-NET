@@ -146,9 +146,11 @@ exports.updatePost = async (req, res) => {
 
     const userId = req.user?.id;
     const isModerator = req.user?.moderator;
+    const userRole = req.user?.role;
 
-    // Модератор может редактировать любой пост
-    if (!userId || (post.author.toString() !== String(userId) && !isModerator)) {
+    // Модератор или учитель могут редактировать любой пост
+    // Автор может редактировать свой пост
+    if (!userId || (post.author.toString() !== String(userId) && !isModerator && userRole !== 'teacher')) {
       return res.status(403).json({
         success: false,
         message: 'Нет доступа к изменению этого поста'
@@ -160,12 +162,14 @@ exports.updatePost = async (req, res) => {
 
     await post.save();
 
+    await post.populate('author', '_id email username displayName showUsername color');
+
     console.log(`✅ Обновлен пост ${req.params.id}`);
 
     return res.status(200).json({
       success: true,
       message: 'Пост успешно обновлен',
-      post
+      post: enrichPost(post, userId)
     });
   } catch (error) {
     res.status(500).json({
@@ -191,7 +195,11 @@ exports.deletePost = async (req, res) => {
     }
 
     const isModerator = req.user?.moderator;
-    if (!userId || (post.author.toString() !== String(userId) && !isModerator)) {
+    const userRole = req.user?.role;
+    
+    // Модератор или учитель могут удалить любой пост
+    // Автор может удалить свой пост
+    if (!userId || (post.author.toString() !== String(userId) && !isModerator && userRole !== 'teacher')) {
       return res.status(403).json({
         success: false,
         message: 'Нет доступа к удалению этого поста'

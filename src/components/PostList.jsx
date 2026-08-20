@@ -5,9 +5,10 @@ import useAuthStore from '../store/authStore'
 import { getAuthorDisplayName } from '../utils/userName'
 
 const PostList = () => {
-  const { posts, fetchPosts, isLoading, deletePost } = usePostsStore()
+  const { posts, fetchPosts, isLoading, deletePost, updatePost } = usePostsStore()
   const { user } = useAuthStore()
   const isModerator = user?.moderator === true
+  const isTeacher = user?.role === 'teacher'
 
   useEffect(() => {
     fetchPosts()
@@ -43,7 +44,9 @@ const PostList = () => {
             accentColor={rawAuthor?.color}
             isOwner={isOwner}
             isModerator={isModerator}
-            onDelete={(isOwner || isModerator) ? () => deletePost(post._id) : undefined}
+            isTeacher={isTeacher}
+            onDelete={(isOwner || isModerator || isTeacher) ? () => deletePost(post._id) : undefined}
+            onEdit={(postId, text) => updatePost(postId, text)}
           />
         )
       })}

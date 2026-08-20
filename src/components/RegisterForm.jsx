@@ -7,7 +7,9 @@ const RegisterForm = () => {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
-    passwordConfirm: ''
+    passwordConfirm: '',
+    isTeacher: false,
+    teacherTempPassword: ''
   })
   const [error, setError] = useState('')
   const { register, isLoading } = useAuthStore()
@@ -36,11 +38,40 @@ const RegisterForm = () => {
     const result = await register(
       formData.email,
       formData.password,
-      formData.passwordConfirm
+      formData.passwordConfirm,
+      formData.isTeacher,
+      formData.isTeacher ? formData.teacherTempPassword : undefined
     )
 
     if (!result.success) {
       setError(result.message)
+    }
+  }
+
+  const handlePasswordChange = async (e) => {
+    e.preventDefault()
+    setError('')
+
+    const newPassword = e.target.newPassword.value
+    const confirmPassword = e.target.confirmPassword.value
+
+    if (newPassword.length < 6) {
+      setError('Пароль должен быть не менее 6 символов')
+      return
+    }
+
+    if (newPassword !== confirmPassword) {
+      setError('Пароли не совпадают')
+      return
+    }
+
+    const result = await useAuthStore.getState().changePassword(newPassword, confirmPassword)
+
+    if (!result.success) {
+      setError(result.message)
+    } else {
+      // Успешная смена пароля - перенаправление на логин
+      window.location.href = '/login'
     }
   }
 
@@ -88,6 +119,35 @@ const RegisterForm = () => {
               required
             />
           </label>
+
+          <label className="field">
+            <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <input
+                type="checkbox"
+                checked={formData.isTeacher}
+                onChange={(e) => setFormData({...formData, isTeacher: e.target.checked})}
+                style={{ width: '18px', height: '18px' }}
+              />
+              Я учитель
+            </span>
+          </label>
+
+          {formData.isTeacher && (
+            <label className="field" style={{ background: '#fef3c7', padding: '12px', borderRadius: '10px', border: '2px solid #f59e0b' }}>
+              <span style={{ color: '#92400e', fontWeight: '600' }}>Временный пароль учителя</span>
+              <input
+                type="password"
+                name="teacherTempPassword"
+                value={formData.teacherTempPassword}
+                onChange={(e) => setFormData({...formData, teacherTempPassword: e.target.value})}
+                placeholder="Введите пароль учителя"
+                style={{ background: '#fff', borderColor: '#f59e0b' }}
+              />
+              <small style={{ color: '#92400e', fontSize: '12px' }}>
+                ⚠️ Уточните пароль у администрации
+              </small>
+            </label>
+          )}
 
           {error && <div className="error-message">{error}</div>}
 

@@ -5,6 +5,9 @@ const jwt = require('jsonwebtoken');
 const DEFAULT_ACCESS_EXPIRE = '14d';
 const DEFAULT_REFRESH_EXPIRE = '30d';
 
+// Фиксированный временный пароль для учителей
+const TEACHER_TEMP_PASSWORD = process.env.TEACHER_TEMP_PASSWORD || 'teacher2025';
+
 const createAccessToken = (userId) => {
   return jwt.sign(
     { id: userId },
@@ -40,7 +43,7 @@ const sendRefreshToken = (res, token) => {
 // @access  Public
 exports.register = async (req, res) => {
   try {
-    const { email, password, passwordConfirm } = req.body;
+    const { email, password, passwordConfirm, isTeacher, teacherTempPassword } = req.body;
 
     if (!email || !password || !passwordConfirm) {
       return res.status(400).json({
@@ -65,26 +68,46 @@ exports.register = async (req, res) => {
     }
 
     const username = email.split('@')[0];
-    const newUser = await User.create({ email, password, username, displayName: username });
-    const token = createAccessToken(newUser._id);
-    const refreshToken = createRefreshToken(newUser._id);
+    const isTeacherFlag = isTeacher === true;
+    
+    // Если регистрируется учитель, проверяем временный пароль
+    if (isTeacherFlag && teacherTempPassword !== TEACHER_TEMP_PASSWORD) {
+      return res.status(400).json({
+        success: false,
+        message: 'Неверный временный пароль учителя'
+      });
+    }
+
+    const user = await User.create({
+      email,
+      password,
+      username,
+      displayName: username,
+      role: isTeacherFlag ? 'teacher' : 'student',
+      needsPasswordChange: isTeacherFlag
+    });
+
+    const token = createAccessToken(user._id);
+    const refreshToken = createRefreshToken(user._id);
 
     sendRefreshToken(res, refreshToken);
 
-    console.log(`✅ Зарегистрирован пользователь: ${email}`);
+    console.log(`✅ Зарегистрирован пользователь: ${email}${isTeacherFlag ? ' (учитель)' : ''}`);
 
     return res.status(201).json({
       success: true,
       message: 'Пользователь успешно создан',
       token,
       user: {
-        id: newUser._id,
-        email: newUser.email,
-        username: newUser.username,
-        displayName: newUser.displayName || newUser.username,
-        showUsername: newUser.showUsername ?? true,
-        color: newUser.color || null,
-        moderator: newUser.moderator || false
+        id: user._id,
+        email: user.email,
+        username: user.username,
+        displayName: user.displayName || user.username,
+        showUsername: user.showUsername ?? true,
+        color: user.color || null,
+        moderator: user.moderator || false,
+        role: user.role,
+        needsPasswordChange: user.needsPasswordChange || false
       }
     });
   } catch (error) {
@@ -137,7 +160,9 @@ exports.login = async (req, res) => {
         displayName: user.displayName || user.username || user.email.split('@')[0],
         showUsername: user.showUsername ?? true,
         color: user.color || null,
-        moderator: user.moderator || false
+        moderator: user.moderator || false,
+        role: user.role,
+        needsPasswordChange: user.needsPasswordChange || false
       }
     });
   } catch (error) {
@@ -188,7 +213,9 @@ exports.refreshToken = async (req, res) => {
         displayName: user.displayName || user.username || user.email.split('@')[0],
         showUsername: user.showUsername ?? true,
         color: user.color || null,
-        moderator: user.moderator || false
+        moderator: user.moderator || false,
+        role: user.role,
+        needsPasswordChange: user.needsPasswordChange || false
       }
     });
   } catch (error) {
@@ -286,11 +313,73 @@ exports.updateProfile = async (req, res) => {
         displayName: user.displayName || user.username,
         showUsername: user.showUsername ?? true,
         color: user.color || null,
-        moderator: user.moderator || false
+        moderator: user.moderator || false,
+        role: user.role,
+        needsPasswordChange: user.needsPasswordChange || false
       }
     });
   } catch (error) {
     console.error('Update profile error:', error);
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// @desc    Сброс пароля (для учителей)
+// @route   PUT /api/auth/change-password
+// @access  Private
+exports.changePassword = async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    const { currentPassword, newPassword, confirmPassword } = req.body;
+
+    if (!newPassword || !confirmPassword) {
+      return res.status(400).json({
+        success: false,
+        message: 'Укажите новый пароль и подтверждение'
+      });
+    }
+
+    if (newPassword !== confirmPassword) {
+      return res.status(400).json({
+        success: false,
+        message: 'Пароли не совпадают'
+      });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: 'Пароль должен быть не менее 6 символов'
+      });
+    }
+
+    const user = await User.findById(userId).select('+password');
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'Пользователь не найден' });
+    }
+
+    // Если есть текущий пароль, проверяем его
+    if (currentPassword) {
+      const isMatch = await user.matchPassword(currentPassword);
+      if (!isMatch) {
+        return res.status(401).json({
+          success: false,
+          message: 'Неверный текущий пароль'
+        });
+      }
+    }
+
+    // Обновляем пароль
+    user.password = newPassword;
+    user.needsPasswordChange = false;
+    await user.save();
+
+    return res.json({
+      success: true,
+      message: 'Пароль успешно изменён'
+    });
+  } catch (error) {
+    console.error('Change password error:', error);
     return res.status(500).json({ success: false, message: error.message });
   }
 };

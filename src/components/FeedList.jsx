@@ -7,7 +7,7 @@ import useAuthStore from '../store/authStore'
 import './FeedList.css'
 
 const FeedList = () => {
-  const { posts, fetchPosts, isLoading: postsLoading, deletePost } = usePostsStore()
+  const { posts, fetchPosts, isLoading: postsLoading, deletePost, updatePost } = usePostsStore()
   const { polls, fetchPolls, isLoading: pollsLoading, deletePoll } = usePollsStore()
   const { user } = useAuthStore()
 
@@ -54,6 +54,10 @@ const FeedList = () => {
     }
   }
 
+  const handleEditPost = async (postId, text) => {
+    await updatePost(postId, text)
+  }
+
   const handleDeletePoll = async (pollId, pollQuestion) => {
     if (!window.confirm(`Удалить опрос «${pollQuestion}»?`)) return
     const result = await deletePoll(pollId)
@@ -86,6 +90,7 @@ const FeedList = () => {
           const post = item.data
           const isOwner = post.author?._id?.toString() === user?.id
           const isModerator = user?.moderator === true
+          const isTeacher = user?.role === 'teacher'
           const rawAuthor = post.author
 
           return (
@@ -99,7 +104,9 @@ const FeedList = () => {
               accentColor={rawAuthor?.color}
               isOwner={isOwner}
               isModerator={isModerator}
-              onDelete={isOwner || isModerator ? () => handleDeletePost(post._id) : undefined}
+              isTeacher={isTeacher}
+              onDelete={isOwner || isModerator || isTeacher ? () => handleDeletePost(post._id) : undefined}
+              onEdit={isTeacher || isModerator || isOwner ? (postId, text) => handleEditPost(postId, text) : undefined}
             />
           )
         } else if (item.type === 'poll') {

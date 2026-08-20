@@ -230,3 +230,73 @@
   background: var(--surface-strong);
   color: var(--muted);
 }
+
+/* Редактирование поста */
+.post-card__edit-form {
+  margin-bottom: 12px;
+}
+
+.post-card__edit-textarea {
+  width: 100%;
+  padding: 12px;
+  border: 2px solid var(--user-accent, var(--primary));
+  border-radius: 10px;
+  background: var(--input-bg);
+  color: var(--text);
+  font-size: 1rem;
+  resize: vertical;
+  font-family: inherit;
+  outline: none;
+}
+
+.post-card__edit-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.post-card__edit-save {
+  padding: 8px 16px;
+  border: none;
+  background: var(--user-accent, var(--primary));
+  color: var(--primary-contrast);
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: opacity 0.2s;
+}
+
+.post-card__edit-save:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.post-card__edit-cancel {
+  padding: 8px 16px;
+  border: 1px solid var(--border);
+  background: var(--surface-strong);
+  color: var(--text);
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.2s;
+}
+
+.post-card__edit-cancel:hover {
+  background: var(--surface);
+}
+
+.post-card__edit-toggle {
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  background: var(--surface-strong);
+  color: var(--text);
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background 0.2s;
+}
+
+.post-card__edit-toggle:hover {
+  background: var(--surface);
+}

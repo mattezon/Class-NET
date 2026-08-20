@@ -216,6 +216,27 @@ const usePostsStore = create((set, get) => ({
     }
   },
 
+  // Обновить пост
+  updatePost: async (postId, text, image = null) => {
+    try {
+      const response = await axios.put(`/api/posts/${postId}`, { text, image })
+
+      if (response.data.success) {
+        set({
+          posts: get().posts.map(post =>
+            post._id === postId ? response.data.post : post
+          )
+        })
+        return { success: true }
+      }
+    } catch (error) {
+      handleUnauthorized(error)
+      const message = error.response?.data?.message || 'Ошибка при обновлении поста'
+      set({ error: message })
+      return { success: false, message }
+    }
+  },
+
   // Очистить ошибку
   clearError: () => {
     set({ error: null })

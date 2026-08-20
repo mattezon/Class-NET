@@ -17,9 +17,16 @@
   font-size: 1.5rem;
   font-weight: 700;
   margin-left: 32px;
-  margin-bottom: 40px;
+  margin-bottom: 20px;
   letter-spacing: 0.02em;
   color: var(--sidebar-text);
+}
+
+.sidebar__user-info {
+  margin: 0 16px 16px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 13px;
 }
 
 .sidebar__version {
@@ -71,9 +78,10 @@
 
   .sidebar__nav-link {
     padding: 10px 14px;
-    white-space: nowrap;
+    white-space: normal;
     border-left: none;
     border-radius: 12px;
+    font-size: 0.9rem;
   }
 
   .sidebar__nav-link.active,

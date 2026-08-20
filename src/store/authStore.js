@@ -55,13 +55,15 @@ const useAuthStore = create((set, get) => ({
   },
 
   // Регистрация
-  register: async (email, password, passwordConfirm) => {
+  register: async (email, password, passwordConfirm, isTeacher = false, teacherTempPassword = null) => {
     set({ isLoading: true, error: null })
     try {
       const response = await axios.post('/api/auth/register', {
         email,
         password,
-        passwordConfirm
+        passwordConfirm,
+        isTeacher,
+        ...(isTeacher && teacherTempPassword ? { teacherTempPassword } : {})
       })
 
       if (response.data.success) {
@@ -70,6 +72,26 @@ const useAuthStore = create((set, get) => ({
       }
     } catch (error) {
       const message = error.response?.data?.message || 'Ошибка при регистрации'
+      set({ error: message, isLoading: false })
+      return { success: false, message }
+    }
+  },
+
+  // Смена пароля (для учителей)
+  changePassword: async (newPassword, confirmPassword) => {
+    set({ isLoading: true, error: null })
+    try {
+      const response = await axios.put('/api/auth/change-password', {
+        newPassword,
+        confirmPassword
+      })
+
+      if (response.data.success) {
+        set({ isLoading: false })
+        return { success: true }
+      }
+    } catch (error) {
+      const message = error.response?.data?.message || 'Ошибка при смене пароля'
       set({ error: message, isLoading: false })
       return { success: false, message }
     }

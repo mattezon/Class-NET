@@ -42,6 +42,15 @@ const userSchema = new mongoose.Schema(
       // API-обновление профиля (auth/profile) и эндпоинты управления
       // пользователями не принимают и не меняют это поле.
     },
+    role: {
+      type: String,
+      enum: ['student', 'teacher'],
+      default: 'student'
+    },
+    needsPasswordChange: {
+      type: Boolean,
+      default: false
+    },
     password: {
       type: String,
       required: [true, 'Пожалуйста, укажите пароль'],

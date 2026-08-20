@@ -13,12 +13,46 @@ const reactionIcons = {
   angry: '😡'
 }
 
-const PostCard = ({ post, isOwner, onDelete, accentColor, isModerator }) => {
+const PostCard = ({ post, isOwner, onDelete, onEdit, accentColor, isModerator, isTeacher }) => {
   const { user } = useAuthStore()
   const { commentsByPost, fetchComments, createComment, deleteComment, reactToPost, getUserReaction, userReactions } = usePostsStore()
   const [commentsOpen, setCommentsOpen] = useState(false)
   const [commentText, setCommentText] = useState('')
   const [isCommentLoading, setIsCommentLoading] = useState(false)
+  const [isEditing, setIsEditing] = useState(false)
+  const [editText, setEditText] = useState('')
+  const [isEditLoading, setIsEditLoading] = useState(false)
+
+  const canEdit = isOwner || isModerator || isTeacher
+
+  useEffect(() => {
+    if (user?.id) {
+      getUserReaction(post._id)
+    }
+  }, [post._id, user?.id, getUserReaction])
+
+  const handleEdit = () => {
+    setEditText(post.text)
+    setIsEditing(true)
+  }
+
+  const handleSaveEdit = async (e) => {
+    e.preventDefault()
+    if (!editText.trim() || isEditLoading) return
+
+    setIsEditLoading(true)
+    try {
+      await onEdit(post._id, editText.trim())
+      setIsEditing(false)
+    } finally {
+      setIsEditLoading(false)
+    }
+  }
+
+  const handleCancelEdit = () => {
+    setIsEditing(false)
+    setEditText('')
+  }
 
   const createdAt = post.time || (post.createdAt ? new Date(post.createdAt).toLocaleString() : '')
   const comments = commentsByPost[post._id] || []
@@ -79,8 +113,30 @@ const PostCard = ({ post, isOwner, onDelete, accentColor, isModerator }) => {
         </div>
       </div>
       <div className="post-card__content">
-        <div className="post-card__text">{post.text}</div>
-        {post.image && <img className="post-card__image" src={post.image} alt="post" />}
+        {isEditing ? (
+          <form className="post-card__edit-form" onSubmit={handleSaveEdit}>
+            <textarea
+              className="post-card__edit-textarea"
+              value={editText}
+              onChange={(e) => setEditText(e.target.value)}
+              rows={3}
+              required
+            />
+            <div className="post-card__edit-actions">
+              <button type="submit" className="post-card__edit-save" disabled={isEditLoading}>
+                {isEditLoading ? 'Сохранение...' : 'Сохранить'}
+              </button>
+              <button type="button" className="post-card__edit-cancel" onClick={handleCancelEdit}>
+                Отмена
+              </button>
+            </div>
+          </form>
+        ) : (
+          <>
+            <div className="post-card__text">{post.text}</div>
+            {post.image && <img className="post-card__image" src={post.image} alt="post" />}
+          </>
+        )}
       </div>
       <div className="post-card__actions">
         {Object.entries(reactionIcons).map(([type, icon]) => (
@@ -97,10 +153,17 @@ const PostCard = ({ post, isOwner, onDelete, accentColor, isModerator }) => {
           💬 {post.comments || 0}
         </button>
         <span className="post-card__share">↗️ {post.shares}</span>
-        {(isOwner || isModerator) && (
-          <button className="post-card__delete" onClick={onDelete}>
-            🗑️
-          </button>
+        {canEdit && (
+          <>
+            {!isEditing && (
+              <button className="post-card__edit-toggle" onClick={handleEdit} title="Редактировать">
+                ✏️
+              </button>
+            )}
+            <button className="post-card__delete" onClick={onDelete} title="Удалить">
+              🗑️
+            </button>
+          </>
         )}
       </div>
 
