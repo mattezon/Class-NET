@@ -48,33 +48,6 @@ const RegisterForm = () => {
     }
   }
 
-  const handlePasswordChange = async (e) => {
-    e.preventDefault()
-    setError('')
-
-    const newPassword = e.target.newPassword.value
-    const confirmPassword = e.target.confirmPassword.value
-
-    if (newPassword.length < 6) {
-      setError('Пароль должен быть не менее 6 символов')
-      return
-    }
-
-    if (newPassword !== confirmPassword) {
-      setError('Пароли не совпадают')
-      return
-    }
-
-    const result = await useAuthStore.getState().changePassword(newPassword, confirmPassword)
-
-    if (!result.success) {
-      setError(result.message)
-    } else {
-      // Успешная смена пароля - перенаправление на логин
-      window.location.href = '/login'
-    }
-  }
-
   return (
     <main className="page-shell">
       <section className="login-card">

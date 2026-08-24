@@ -47,10 +47,6 @@ const userSchema = new mongoose.Schema(
       enum: ['student', 'teacher'],
       default: 'student'
     },
-    needsPasswordChange: {
-      type: Boolean,
-      default: false
-    },
     password: {
       type: String,
       required: [true, 'Пожалуйста, укажите пароль'],

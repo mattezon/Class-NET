@@ -32,11 +32,14 @@ const UserRow = ({ user, onEdit, onDelete, onResetPassword }) => {
         <div className="mod-user__names">
           <strong>{user.displayName || user.username}</strong>
           <small>
-            @{user.username || "вЂ”"} В· {user.email}
+            @{user.username || "\u2014"} \u00B7 {user.email}
           </small>
         </div>
         {user.moderator && (
-          <span className="mod-user__badge">РјРѕРґРµСЂР°С‚РѕСЂ</span>
+          <span className="mod-user__badge">Модератор</span>
+        )}
+        {user.role === "teacher" && (
+          <span className="mod-user__badge mod-user__badge--teacher">Учитель</span>
         )}
       </div>
 
@@ -45,12 +48,12 @@ const UserRow = ({ user, onEdit, onDelete, onResetPassword }) => {
           <input
             value={displayName}
             onChange={(e) => setDisplayName(e.target.value)}
-            placeholder="РћС‚РѕР±СЂР°Р¶Р°РµРјРѕРµ РёРјСЏ"
+            placeholder="Отображаемое имя"
           />
           <input
             value={username}
             onChange={(e) => setUsername(e.target.value)}
-            placeholder="Р®Р·РµСЂРЅРµР№Рј"
+            placeholder="Юзернейм"
           />
           <input
             type="color"
@@ -63,33 +66,33 @@ const UserRow = ({ user, onEdit, onDelete, onResetPassword }) => {
               onClick={save}
               disabled={saving}
             >
-              {saving ? "вЂ¦" : "РЎРѕС…СЂР°РЅРёС‚СЊ"}
+              {saving ? "..." : "Сохранить"}
             </button>
             <button className="mod-btn" onClick={() => setEditing(false)}>
-              РћС‚РјРµРЅР°
+              Отмена
             </button>
           </div>
         </div>
       ) : (
         <div className="mod-user__actions">
           <button className="mod-btn" onClick={() => setEditing(true)}>
-            РР·РјРµРЅРёС‚СЊ
+            Изменить
           </button>
           <button className="mod-btn" onClick={() => onResetPassword(user.id)}>
-            РџР°СЂРѕР»СЊ
+            Пароль
           </button>
           <button
             className="mod-btn mod-btn--danger"
             onClick={() => {
               if (
                 window.confirm(
-                  `РЈРґР°Р»РёС‚СЊ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ ${user.email}? Р­С‚Рѕ СѓРґР°Р»РёС‚ РµРіРѕ РїРѕСЃС‚С‹ Рё СЃРѕРѕР±С‰РµРЅРёСЏ.`,
+                  `Удалить пользователя ${user.email}? Это удалит его посты и сообщения.`,
                 )
               )
                 onDelete(user.id);
             }}
           >
-            РЈРґР°Р»РёС‚СЊ
+            Удалить
           </button>
         </div>
       )}
@@ -116,7 +119,7 @@ const ModerationPage = () => {
       .catch((e) =>
         notify(
           e.response?.data?.message ||
-            "РќРµ СѓРґР°Р»РѕСЃСЊ Р·Р°РіСЂСѓР·РёС‚СЊ РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№",
+            "Не удалось загрузить пользователей",
         ),
       );
 
@@ -127,7 +130,7 @@ const ModerationPage = () => {
       .catch((e) =>
         notify(
           e.response?.data?.message ||
-            "РќРµ СѓРґР°Р»РѕСЃСЊ Р·Р°РіСЂСѓР·РёС‚СЊ РїРѕСЃС‚С‹",
+            "Не удалось загрузить посты",
         ),
       );
 
@@ -160,12 +163,12 @@ const ModerationPage = () => {
       .catch((e) => {
         notify(
           e.response?.data?.message ||
-            "РћС€РёР±РєР° РїСЂРё РѕР±РЅРѕРІР»РµРЅРёРё РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ",
+            "Ошибка при обновлении пользователя",
         );
         return null;
       });
     if (res?.data?.success) {
-      notify("РџРѕР»СЊР·РѕРІР°С‚РµР»СЊ РѕР±РЅРѕРІР»С‘РЅ");
+      notify("Пользователь обновлен");
       loadUsers();
     }
   };
@@ -173,19 +176,19 @@ const ModerationPage = () => {
   const deleteUser = async (id) => {
     const res = await axios.delete(`${API_BASE}/api/users/${id}`).catch((e) => {
       notify(
-        e.response?.data?.message || "РћС€РёР±РєР° РїСЂРё СѓРґР°Р»РµРЅРёРё",
+        e.response?.data?.message || "Ошибка при удалении",
       );
       return null;
     });
     if (res?.data?.success) {
-      notify("РџРѕР»СЊР·РѕРІР°С‚РµР»СЊ СѓРґР°Р»С‘РЅ");
+      notify("Пользователь удален");
       loadUsers();
     }
   };
 
   const resetPassword = async (id) => {
     const password = window.prompt(
-      "РќРѕРІС‹Р№ РїР°СЂРѕР»СЊ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ (РЅРµ РєРѕСЂРѕС‡Рµ 6 СЃРёРјРІРѕР»РѕРІ):",
+      "Новый пароль пользователя (не короче 6 символов):",
     );
     if (!password) return;
     const res = await axios
@@ -193,11 +196,11 @@ const ModerationPage = () => {
       .catch((e) => {
         notify(
           e.response?.data?.message ||
-            "РћС€РёР±РєР° РїСЂРё СЃРјРµРЅРµ РїР°СЂРѕР»СЏ",
+            "Ошибка при смене пароля",
         );
         return null;
       });
-    if (res?.data?.success) notify("РџР°СЂРѕР»СЊ РѕР±РЅРѕРІР»С‘РЅ");
+    if (res?.data?.success) notify("Пароль обновлен");
   };
 
   const handleRequestReset = async (request) => {
@@ -217,7 +220,7 @@ const ModerationPage = () => {
         return null;
       });
     if (res?.data?.success) {
-      notify("Пароль обновлён; заявка закрыта");
+      notify("Пароль обновлен; заявка закрыта");
       await axios
         .put(`${API_BASE}/api/users/reset-requests/${request.id}`)
         .catch(() => {});
@@ -241,34 +244,34 @@ const ModerationPage = () => {
   const editPost = async (id) => {
     const post = posts.find((p) => p._id === id);
     if (!post) return;
-    const text = window.prompt("РќРѕРІС‹Р№ С‚РµРєСЃС‚ РїРѕСЃС‚Р°:", post.text);
+    const text = window.prompt("Новый текст поста:", post.text);
     if (text === null) return;
     const res = await axios
       .put(`${API_BASE}/api/posts/${id}`, { text })
       .catch((e) => {
         notify(
           e.response?.data?.message ||
-            "РћС€РёР±РєР° РїСЂРё СЂРµРґР°РєС‚РёСЂРѕРІР°РЅРёРё РїРѕСЃС‚Р°",
+            "Ошибка при редактировании поста",
         );
         return null;
       });
     if (res?.data?.success) {
-      notify("РџРѕСЃС‚ РѕР±РЅРѕРІР»С‘РЅ");
+      notify("Пост обновлен");
       loadPosts();
     }
   };
 
   const deletePost = async (id) => {
-    if (!window.confirm("РЈРґР°Р»РёС‚СЊ СЌС‚РѕС‚ РїРѕСЃС‚?")) return;
+    if (!window.confirm("Удалить этот пост?")) return;
     const res = await axios.delete(`${API_BASE}/api/posts/${id}`).catch((e) => {
       notify(
         e.response?.data?.message ||
-          "РћС€РёР±РєР° РїСЂРё СѓРґР°Р»РµРЅРёРё РїРѕСЃС‚Р°",
+          "Ошибка при удалении поста",
       );
       return null;
     });
     if (res?.data?.success) {
-      notify("РџРѕСЃС‚ СѓРґР°Р»С‘РЅ");
+      notify("Пост удален");
       loadPosts();
     }
   };
@@ -283,27 +286,26 @@ const ModerationPage = () => {
 
   return (
     <main className="mod-page">
-      <h1 className="mod-page__title">РђРґРјРёРЅРёСЃС‚СЂРёСЂРѕРІР°РЅРёРµ</h1>
+      <h1 className="mod-page__title">Администрирование</h1>
 
       <div className="mod-page__tabs">
         <button
           className={`mod-tab ${tab === "users" ? "active" : ""}`}
           onClick={() => setTab("users")}
         >
-          РџРѕР»СЊР·РѕРІР°С‚РµР»Рё ({users.length})
+          Пользователи ({users.length})
         </button>
         <button
           className={`mod-tab ${tab === "posts" ? "active" : ""}`}
           onClick={() => setTab("posts")}
         >
-          РџРѕСЃС‚С‹ ({posts.length})
+          Посты ({posts.length})
         </button>
         <button
           className={`mod-tab ${tab === "requests" ? "active" : ""}`}
           onClick={() => setTab("requests")}
         >
-          Заявки на сброс (
-          {requests.filter((r) => r.status === "pending").length})
+          Заявки на сброс ({requests.filter((r) => r.status === "pending").length})
         </button>
       </div>
 
@@ -312,18 +314,18 @@ const ModerationPage = () => {
       {tab === "users" && (
         <div className="mod-users">
           <p className="mod-page__hint">
-            РџСЂР°РІР° РјРѕРґРµСЂР°С‚РѕСЂР° РЅР°Р·РЅР°С‡Р°СЋС‚СЃСЏ С‚РѕР»СЊРєРѕ
-            С‡РµСЂРµР· Р‘Р” (`moderator: true`) вЂ” РІ РёРЅС‚РµСЂС„РµР№СЃРµ РёС…
-            РёР·РјРµРЅРёС‚СЊ РЅРµР»СЊР·СЏ.
+            Права модератора назначаются только
+            через БД (`moderator: true`) \u2014 в интерфейсе их
+            изменить нельзя.
           </p>
           <input
             className="mod-search"
-            placeholder="РџРѕРёСЃРє РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ РїРѕ РёРјРµРЅРё/РїРѕС‡С‚РµвЂ¦"
+            placeholder="Поиск пользователя по имени/почте\u2026"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
           {loading ? (
-            <p>Р—Р°РіСЂСѓР·РєР°вЂ¦</p>
+            <p>Загрузка\u2026</p>
           ) : (
             <ul className="mod-list">
               {filteredUsers.map((u) => (
@@ -343,11 +345,11 @@ const ModerationPage = () => {
       {tab === "posts" && (
         <div className="mod-posts">
           <p className="mod-page__hint">
-            Р РµРґР°РєС‚РёСЂРѕРІР°РЅРёРµ Рё СѓРґР°Р»РµРЅРёРµ Р»СЋР±С‹С…
-            РїРѕСЃС‚РѕРІ. РЈРґР°Р»РµРЅРёРµ Р±РµР·РІРѕР·РІСЂР°С‚РЅРѕ.
+            Редактирование и удаление любых
+            постов. Удаление безвозвратно.
           </p>
           {loading ? (
-            <p>Р—Р°РіСЂСѓР·РєР°вЂ¦</p>
+            <p>Загрузка\u2026</p>
           ) : (
             <ul className="mod-list">
               {posts.map((p) => (
@@ -356,7 +358,7 @@ const ModerationPage = () => {
                     <strong>
                       {p.author
                         ? getAuthorDisplayName(p.author)
-                        : "РЅРµРёР·РІРµСЃС‚РµРЅ"}
+                        : "неизвестен"}
                     </strong>
                     <small>
                       {new Date(p.createdAt || p._id).toLocaleString()}
@@ -365,13 +367,13 @@ const ModerationPage = () => {
                   <div className="mod-post__text">{p.text}</div>
                   <div className="mod-post__actions">
                     <button className="mod-btn" onClick={() => editPost(p._id)}>
-                      РР·РјРµРЅРёС‚СЊ
+                      Изменить
                     </button>
                     <button
                       className="mod-btn mod-btn--danger"
                       onClick={() => deletePost(p._id)}
                     >
-                      РЈРґР°Р»РёС‚СЊ
+                      Удалить
                     </button>
                   </div>
                 </li>
@@ -388,7 +390,7 @@ const ModerationPage = () => {
             пароль?».
           </p>
           {loading ? (
-            <p>Загрузка…</p>
+            <p>Загрузка\u2026</p>
           ) : (
             <ul className="mod-list">
               {requests.map((r) => (

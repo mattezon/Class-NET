@@ -77,26 +77,6 @@ const useAuthStore = create((set, get) => ({
     }
   },
 
-  // Смена пароля (для учителей)
-  changePassword: async (newPassword, confirmPassword) => {
-    set({ isLoading: true, error: null })
-    try {
-      const response = await axios.put('/api/auth/change-password', {
-        newPassword,
-        confirmPassword
-      })
-
-      if (response.data.success) {
-        set({ isLoading: false })
-        return { success: true }
-      }
-    } catch (error) {
-      const message = error.response?.data?.message || 'Ошибка при смене пароля'
-      set({ error: message, isLoading: false })
-      return { success: false, message }
-    }
-  },
-
   // Вход
   login: async (email, password) => {
     set({ isLoading: true, error: null })

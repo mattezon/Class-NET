@@ -83,8 +83,7 @@ exports.register = async (req, res) => {
       password,
       username,
       displayName: username,
-      role: isTeacherFlag ? 'teacher' : 'student',
-      needsPasswordChange: isTeacherFlag
+      role: isTeacherFlag ? 'teacher' : 'student'
     });
 
     const token = createAccessToken(user._id);
@@ -106,8 +105,7 @@ exports.register = async (req, res) => {
         showUsername: user.showUsername ?? true,
         color: user.color || null,
         moderator: user.moderator || false,
-        role: user.role,
-        needsPasswordChange: user.needsPasswordChange || false
+        role: user.role
       }
     });
   } catch (error) {
@@ -161,8 +159,7 @@ exports.login = async (req, res) => {
         showUsername: user.showUsername ?? true,
         color: user.color || null,
         moderator: user.moderator || false,
-        role: user.role,
-        needsPasswordChange: user.needsPasswordChange || false
+        role: user.role
       }
     });
   } catch (error) {
@@ -214,8 +211,7 @@ exports.refreshToken = async (req, res) => {
         showUsername: user.showUsername ?? true,
         color: user.color || null,
         moderator: user.moderator || false,
-        role: user.role,
-        needsPasswordChange: user.needsPasswordChange || false
+        role: user.role
       }
     });
   } catch (error) {
@@ -314,8 +310,7 @@ exports.updateProfile = async (req, res) => {
         showUsername: user.showUsername ?? true,
         color: user.color || null,
         moderator: user.moderator || false,
-        role: user.role,
-        needsPasswordChange: user.needsPasswordChange || false
+        role: user.role
       }
     });
   } catch (error) {
@@ -371,7 +366,6 @@ exports.changePassword = async (req, res) => {
 
     // Обновляем пароль
     user.password = newPassword;
-    user.needsPasswordChange = false;
     await user.save();
 
     return res.json({

@@ -3,7 +3,6 @@ import { HashRouter, Routes, Route, Navigate } from 'react-router-dom'
 import useAuthStore from './store/authStore'
 import LoginForm from './components/LoginForm'
 import RegisterForm from './components/RegisterForm'
-import ChangePasswordForm from './components/ChangePasswordForm'
 import ProtectedRoute from './components/ProtectedRoute'
 import MainPage from './pages/MainPage'
 import Dashboard from './pages/Dashboard'
@@ -59,24 +58,10 @@ function App() {
             element={isAuthenticated ? <Navigate to="/" replace /> : <RegisterForm />}
           />
           <Route
-            path="/change-password"
-            element={
-              user?.needsPasswordChange ? (
-                <ChangePasswordForm />
-              ) : (
-                <Navigate to="/" replace />
-              )
-            }
-          />
-          <Route
             path="/"
             element={
               <ProtectedRoute>
-                {user?.needsPasswordChange ? (
-                  <Navigate to="/change-password" replace />
-                ) : (
-                  <MainPage theme={theme} toggleTheme={toggleTheme} />
-                )}
+                <MainPage theme={theme} toggleTheme={toggleTheme} />
               </ProtectedRoute>
             }
           />
