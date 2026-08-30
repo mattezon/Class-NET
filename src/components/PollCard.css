@@ -78,12 +78,27 @@
 
 .poll-card__option.active {
   border-color: var(--user-accent, var(--primary));
-  background: color-mix(in srgb, var(--user-accent, var(--primary)) 10%, transparent);
+  background: var(--user-accent, var(--primary));
+  color: #fff;
+  font-weight: 600;
+}
+
+.poll-card__option.active .poll-card__option-stat {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.poll-card__option.active .poll-card__option-text::after {
+  content: ' ✓';
+  font-weight: 700;
 }
 
 .poll-card__option.result {
   cursor: default;
-  opacity: 0.85;
+  opacity: 0.9;
+}
+
+.poll-card__option.result.active {
+  opacity: 1;
 }
 
 .poll-card__option-text {

@@ -41,7 +41,8 @@ const LoginForm = () => {
     setForgotMsg("");
     setForgotLoading(true);
     try {
-      const { data } = await axios.post("/api/auth/forgot-password", {
+      const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+      const { data } = await axios.post(`${API_URL}/api/auth/forgot-password`, {
         email: forgotEmail,
       });
       if (data?.success) {
@@ -52,7 +53,7 @@ const LoginForm = () => {
       }
     } catch (err) {
       setForgotErr(
-        err.response?.data?.message || "Не удалось отправить заявку.",
+        err.response?.data?.message || "Не удалось отправить заявку. Проверьте соединение с сервером.",
       );
     } finally {
       setForgotLoading(false);

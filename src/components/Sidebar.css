@@ -20,6 +20,7 @@
   margin-bottom: 20px;
   letter-spacing: 0.02em;
   color: var(--sidebar-text);
+  text-shadow: 0 0 12px var(--user-accent, var(--primary)), 0 0 24px var(--user-accent, var(--primary));
 }
 
 .sidebar__user-info {

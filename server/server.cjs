@@ -22,7 +22,7 @@ const startServer = async () => {
       console.warn('⚠️ MongoDB недоступна, сервер запускается в режиме socket-only:', dbError.message);
     }
 
-    const FRONTEND_URL = process.env.FRONTEND_URL || 'https://digital-home.onrender.com';
+    const FRONTEND_URL = process.env.FRONTEND_URL || 'https://class-net.onrender.com';
     const allowedOrigins = new Set([
       'http://localhost:5173',
       'http://localhost:5174',
@@ -30,6 +30,8 @@ const startServer = async () => {
       'http://127.0.0.1:5173',
       'http://127.0.0.1:5174',
       'http://127.0.0.1:5175',
+      'https://class-net.onrender.com',
+      'https://class-net-server.onrender.com',
       FRONTEND_URL
     ]);
 
@@ -69,7 +71,7 @@ const startServer = async () => {
         const token = socket.handshake.auth?.token || socket.handshake.query?.token;
         if (!token) return next(new Error('Не авторизован'));
 
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'digital-home-secret');
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'class-net-secret');
         if (!decoded || !decoded.id) return next(new Error('Неверный токен'));
 
         socket.userId = String(decoded.id);
@@ -151,7 +153,7 @@ const startServer = async () => {
     server.listen(PORT, () => {
       console.log(`
 ╔════════════════════════════════════════════╗
-║  🚀 Сервер Digital Home запущен!           ║
+║  🚀 Сервер Class-NET запущен!           ║
 ║  📍 http://localhost:${PORT}                     ║
 ║                                            ║
 ║  🔐 Демо учетные данные:                  

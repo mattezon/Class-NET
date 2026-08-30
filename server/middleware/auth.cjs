@@ -22,7 +22,7 @@ const protect = async (req, res, next) => {
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'digital-home-secret')
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'class-net-secret')
     const user = await User.findById(decoded.id)
 
     if (!user) {
@@ -51,6 +51,35 @@ const protect = async (req, res, next) => {
   }
 }
 
+// Опциональная авторизация: определяет req.user, если токен есть,
+// но не блокирует запрос для гостей
+const optionalAuth = async (req, res, next) => {
+  const authHeader = req.headers.authorization || req.headers.Authorization
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    const token = authHeader.split(' ')[1]
+
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'class-net-secret')
+      const user = await User.findById(decoded.id)
+
+      if (user) {
+        req.user = {
+          id: user._id.toString(),
+          email: user.email,
+          username: user.username,
+          showUsername: user.showUsername,
+          color: user.color,
+          moderator: user.moderator === true
+        }
+      }
+    } catch (error) {
+      // Токен невалиден/истёк — просто считаем гостем
+    }
+  }
+
+  next()
+}
+
 // Только для модераторов (req.user.moderator === true)
 const requireModerator = (req, res, next) => {
   if (!req.user?.moderator) {
@@ -64,3 +93,4 @@ const requireModerator = (req, res, next) => {
 
 module.exports = protect
 module.exports.requireModerator = requireModerator
+module.exports.optionalAuth = optionalAuth

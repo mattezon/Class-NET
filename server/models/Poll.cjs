@@ -58,7 +58,7 @@ const pollSchema = new mongoose.Schema(
     userChoices: {
       type: Map,
       of: mongoose.Schema.Types.Mixed,
-      default: new Map()
+      default: {}
     }
   },
   { timestamps: true }

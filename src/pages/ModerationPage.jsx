@@ -32,7 +32,7 @@ const UserRow = ({ user, onEdit, onDelete, onResetPassword }) => {
         <div className="mod-user__names">
           <strong>{user.displayName || user.username}</strong>
           <small>
-            @{user.username || "\u2014"} \u00B7 {user.email}
+            @{user.username || "—"} · {user.email}
           </small>
         </div>
         {user.moderator && (
@@ -315,17 +315,17 @@ const ModerationPage = () => {
         <div className="mod-users">
           <p className="mod-page__hint">
             Права модератора назначаются только
-            через БД (`moderator: true`) \u2014 в интерфейсе их
+            через БД (`moderator: true`) — в интерфейсе их
             изменить нельзя.
           </p>
           <input
             className="mod-search"
-            placeholder="Поиск пользователя по имени/почте\u2026"
+            placeholder="Поиск пользователя по имени/почте…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
           {loading ? (
-            <p>Загрузка\u2026</p>
+            <p>Загрузка…</p>
           ) : (
             <ul className="mod-list">
               {filteredUsers.map((u) => (
@@ -349,7 +349,7 @@ const ModerationPage = () => {
             постов. Удаление безвозвратно.
           </p>
           {loading ? (
-            <p>Загрузка\u2026</p>
+            <p>Загрузка…</p>
           ) : (
             <ul className="mod-list">
               {posts.map((p) => (
@@ -390,7 +390,7 @@ const ModerationPage = () => {
             пароль?».
           </p>
           {loading ? (
-            <p>Загрузка\u2026</p>
+            <p>Загрузка…</p>
           ) : (
             <ul className="mod-list">
               {requests.map((r) => (

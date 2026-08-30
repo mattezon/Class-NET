@@ -11,7 +11,7 @@ const TEACHER_TEMP_PASSWORD = process.env.TEACHER_TEMP_PASSWORD || 'teacher2025'
 const createAccessToken = (userId) => {
   return jwt.sign(
     { id: userId },
-    process.env.JWT_SECRET || 'digital-home-secret',
+    process.env.JWT_SECRET || 'class-net-secret',
     {
       expiresIn: process.env.JWT_ACCESS_EXPIRE || DEFAULT_ACCESS_EXPIRE
     }
@@ -21,7 +21,7 @@ const createAccessToken = (userId) => {
 const createRefreshToken = (userId) => {
   return jwt.sign(
     { id: userId },
-    process.env.JWT_REFRESH_SECRET || 'digital-home-refresh-secret',
+    process.env.JWT_REFRESH_SECRET || 'class-net-refresh-secret',
     {
       expiresIn: process.env.JWT_REFRESH_EXPIRE || DEFAULT_REFRESH_EXPIRE
     }
@@ -185,7 +185,7 @@ exports.refreshToken = async (req, res) => {
       });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET || 'digital-home-refresh-secret');
+    const decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET || 'class-net-refresh-secret');
     const user = await User.findById(decoded.id);
 
     if (!user) {

@@ -8,7 +8,7 @@ const Sidebar = ({ activeTab, onChangeTab, theme, toggleTheme }) => {
 
   return (
     <aside className="sidebar">
-      <div className="sidebar__logo">digital home <span className="sidebar__version">v1.2</span></div>
+      <div className="sidebar__logo">Class-NET <span className="sidebar__version">v1.3</span></div>
       
       {user && (
         <div className="sidebar__user-info" style={{

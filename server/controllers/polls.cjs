@@ -15,18 +15,43 @@ const serializePoll = (poll, currentUserId = null) => {
   const hasEnded = !!endsAt && endsAt <= now;
 
   let userVote = null;
-  if (currentUserId && !hasEnded && poll.userChoices) {
-    const v = poll.userChoices.get(currentUserId.toString());
+  let voted = false;
+  
+  if (currentUserId) {
+    const userIdStr = String(currentUserId);
+    
+    // userChoices — всегда объект { userId: index или [indices] }
+    // Исключаем внутренние поля Mongoose ($...)
+    const choicesObj = {};
+    if (poll.userChoices) {
+      const raw = typeof poll.userChoices === 'object' ? poll.userChoices : {};
+      for (const k of Object.keys(raw)) {
+        if (!k.startsWith('$')) {
+          choicesObj[k] = raw[k];
+        }
+      }
+    }
+    
+    const v = choicesObj[userIdStr];
+    
     if (poll.allowsMultiple) {
-      // Для множественного выбора — массив или значение
       userVote = v ? (Array.isArray(v) ? v : [v]) : null;
     } else {
       userVote = v !== undefined && v !== null ? Number(v) : null;
     }
+    
+    if (userVote !== null && userVote !== undefined) {
+      voted = true;
+    }
+    
+    // Также проверяем voters (массив ObjectId)
+    if (!voted && poll.voters && poll.voters.length > 0) {
+      voted = poll.voters.some(v => String(v) === userIdStr);
+    }
   }
 
   return {
-    id: poll._id?.toString?.() || poll.id,
+    id: String(poll._id),
     question: poll.question,
     options: (poll.options || []).map((o, i) => ({
       index: i,
@@ -39,9 +64,7 @@ const serializePoll = (poll, currentUserId = null) => {
     hasEnded,
     votersCount: (poll.voters || []).length,
     total,
-    voted: !!(poll.voters || []).find(
-      (v) => String(v) === String(currentUserId)
-    ),
+    voted,
     userVote,
     creator: poll.creator
       ? {
@@ -95,7 +118,8 @@ exports.createPoll = async (req, res) => {
     const data = {
       question: String(question).trim(),
       options: normalizedOptions,
-      creator: user._id
+      creator: user._id,
+      userChoices: {}
     };
 
     if (allowsMultiple) data.allowsMultiple = true;
@@ -255,11 +279,24 @@ exports.votePoll = async (req, res) => {
     }
 
     const key = userId.toString();
-    const prev = poll.userChoices ? poll.userChoices.get(key) : undefined;
+    // userChoices — всегда объект { userId: index или [indices] }
+    // Исключаем внутренние поля Mongoose ($...)
+    const choicesObj = {};
+    if (poll.userChoices) {
+      const raw = typeof poll.userChoices === 'object' ? poll.userChoices : {};
+      for (const k of Object.keys(raw)) {
+        if (!k.startsWith('$')) {
+          choicesObj[k] = raw[k];
+        }
+      }
+    }
+    
+    const prev = choicesObj[key];
+    const hasVoted = poll.voters.some(v => String(v) === key);
 
     if (poll.allowsMultiple) {
       // Множественный выбор: массив индексов выбранных вариантов
-      let choices = poll.userChoices.get(key);
+      let choices = choicesObj[key];
       if (!choices) choices = [];
       else if (!Array.isArray(choices)) choices = [choices];
 
@@ -275,42 +312,60 @@ exports.votePoll = async (req, res) => {
       }
 
       if (choices.length === 0) {
-        poll.userChoices.delete(key);
+        delete choicesObj[key];
       } else {
-        poll.userChoices.set(key, choices);
+        choicesObj[key] = choices;
       }
     } else {
       // Одиночный выбор
-      // Клик по уже выбранному варианту — снимаем голос
       if (prev === opt) {
+        // Снимаем голос
         poll.options[prev].votes = Math.max(0, poll.options[prev].votes - 1);
-        poll.userChoices.delete(key);
-        if (poll.voters.includes(userId)) {
-          poll.voters.pull(userId);
+        delete choicesObj[key];
+        if (hasVoted) {
+          poll.voters = poll.voters.filter(v => String(v) !== key);
         }
       } else {
+        // Меняем или ставим голос
         if (prev !== undefined && prev !== null) {
           poll.options[prev].votes = Math.max(0, poll.options[prev].votes - 1);
         }
         poll.options[opt].votes += 1;
-        if (!poll.voters.includes(userId)) {
+        if (!hasVoted) {
           poll.voters.push(userId);
         }
-        poll.userChoices.set(key, opt);
+        choicesObj[key] = opt;
       }
     }
 
-    await poll.save();
+    // Сохраняем как Map и обновляем поля
+    const cleanChoices = {};
+    for (const k of Object.keys(choicesObj)) {
+      if (!k.startsWith('$')) {
+        cleanChoices[k] = choicesObj[k];
+      }
+    }
+    const userChoicesMap = new Map(Object.entries(cleanChoices));
+    
+    const updatedPoll = await Poll.findOneAndUpdate(
+      { _id: id },
+      {
+        userChoices: userChoicesMap,
+        options: poll.options,
+        voters: poll.voters
+      },
+      { new: true, runValidators: true }
+    ).populate('creator', '_id email username displayName showUsername color');
 
     const io = req.app.get('io');
     if (io) {
-      io.emit('poll:update', serializePoll(poll, userId));
+      io.emit('poll:update', serializePoll(updatedPoll, userId));
     }
 
     return res.status(200).json({
       success: true,
       message: 'Голос учтён',
-      poll: serializePoll(poll, userId)
+      poll: serializePoll(updatedPoll, userId)
     });
   } catch (error) {
     console.error('Vote poll error:', error);
