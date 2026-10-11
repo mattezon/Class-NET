@@ -12,6 +12,7 @@ const ChatPanel = () => {
   const socketRef = useRef(null)
   const activeChatIdRef = useRef(null)
   const joinedRoomRef = useRef(null)
+  const messagesRef = useRef(null)
   const [chats, setChats] = useState([])
   const [messagesByChat, setMessagesByChat] = useState({})
   const [search, setSearch] = useState('')
@@ -32,6 +33,13 @@ const ChatPanel = () => {
     () => (activeChatId ? (messagesByChat[activeChatId] || []) : []),
     [activeChatId, messagesByChat]
   )
+
+  // Автоскролл к последнему сообщению: при смене чата и при новом сообщении
+  useEffect(() => {
+    const el = messagesRef.current
+    if (!el) return
+    el.scrollTop = el.scrollHeight
+  }, [activeChatId, activeMessages.length])
 
   const formatPreview = (message) => {
     if (!message) return ''
@@ -417,7 +425,10 @@ const ChatPanel = () => {
                 </span>
               </div>
 
-              <div className="chat-panel__messages">
+              <div
+                ref={messagesRef}
+                className="chat-panel__messages"
+              >
                 {activeMessages.length === 0 ? (
                   <p className="chat-panel__empty">Начните диалог</p>
                 ) : (

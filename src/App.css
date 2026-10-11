@@ -86,7 +86,6 @@ body {
 .main-layout {
   display: flex;
   min-height: 100vh;
-  height: 100vh;
   background: var(--bg);
 }
 
@@ -98,8 +97,10 @@ body {
   margin-right: auto;
   margin-left: 240px;
   padding: 32px 32px 32px 0;
+  overflow-y: auto;
 }
 
+/* Вкладка сообщений: собственный скролл независимо от скролла сообщений */
 .main-content--messages {
   max-width: none;
   width: 100%;
@@ -108,22 +109,29 @@ body {
   flex-direction: column;
   min-height: 0;
   height: 100%;
+  max-height: 100vh;
   box-sizing: border-box;
+  overflow-y: auto;
 }
 
 @media (max-width: 900px) {
   .main-layout {
     flex-direction: column;
+    height: auto;
   }
 
   .main-content {
     margin-left: 0;
     padding: 16px;
     max-width: 100vw;
+    min-height: 0;
   }
 
   .main-content--messages {
     padding: 16px;
+    height: 100%;
+    max-height: 100vh;
+    overflow-y: auto;
   }
 }
 
