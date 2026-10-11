@@ -1,17 +1,20 @@
-[
-  {
-    "_id": "1",
-    "email": "demo@example.com",
-    "password": "$2a$10$lS8aSy5.5jXyMqLjyIgR5.T9V5Qj8.7K.5.5.5.5.5.5.5.5.5.5"
-  },
-  {
-    "_id": "1777187117593",
-    "email": "matt.samoilov@gmail.com",
-    "password": "$2a$10$OG3Ahj9G8RrOzWEUti/h0.dIjmcJ.GntipzpPrH4FSz48PL/M.aYC"
-  },
-  {
-    "_id": "1777187246714",
-    "email": "matt.samoilov@yandex.by",
-    "password": "$2a$10$7qEMXUg87rD8h6t92nJjfOALMCNBOaXFkjDM8k1khePbNsTw1fUX6"
-  }
+﻿[
+    {
+        "_id":  "1",
+        "email":  "demo@example.com",
+        "password":  "$2a$10$lS8aSy5.5jXyMqLjyIgR5.T9V5Qj8.7K.5.5.5.5.5.5.5.5.5.5",
+        "role":  "student"
+    },
+    {
+        "_id":  "1777187117593",
+        "email":  "matt.samoilov@gmail.com",
+        "password":  "$2a$10$OG3Ahj9G8RrOzWEUti/h0.dIjmcJ.GntipzpPrH4FSz48PL/M.aYC",
+        "role":  "student"
+    },
+    {
+        "_id":  "1777187246714",
+        "email":  "matt.samoilov@yandex.by",
+        "password":  "$2a$10$7qEMXUg87rD8h6t92nJjfOALMCNBOaXFkjDM8k1khePbNsTw1fUX6",
+        "role":  "student"
+    }
 ]

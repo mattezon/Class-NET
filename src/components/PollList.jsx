@@ -8,6 +8,8 @@ const PollList = () => {
   const [message, setMessage] = useState('')
   const { polls, fetchPolls, isLoading, error, clearError, deletePoll } = usePollsStore()
   const { user } = useAuthStore()
+  const isModerator = user?.moderator === true
+  const isTeacher = user?.role === 'teacher'
 
   useEffect(() => {
     fetchPolls()
@@ -45,7 +47,7 @@ const PollList = () => {
             <PollCard
               key={poll.id}
               poll={poll}
-              isCreator={user?.id === poll.creator?.id}
+              isCreator={user?.id === poll.creator?.id || isModerator || isTeacher}
               onDelete={handleDelete}
             />
           ))}

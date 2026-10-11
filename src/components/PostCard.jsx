@@ -15,10 +15,13 @@ const reactionIcons = {
 
 const PostCard = ({ post, isOwner, onDelete, onEdit, accentColor, isModerator, isTeacher }) => {
   const { user } = useAuthStore()
-  const { commentsByPost, fetchComments, createComment, deleteComment, reactToPost, getUserReaction, userReactions } = usePostsStore()
+  const { commentsByPost, fetchComments, createComment, deleteComment, updateComment, reactToPost, getUserReaction, userReactions } = usePostsStore()
   const [commentsOpen, setCommentsOpen] = useState(false)
   const [commentText, setCommentText] = useState('')
   const [isCommentLoading, setIsCommentLoading] = useState(false)
+  const [editingCommentId, setEditingCommentId] = useState(null)
+  const [commentEditText, setCommentEditText] = useState('')
+  const [isCommentEditLoading, setIsCommentEditLoading] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const [editText, setEditText] = useState('')
   const [isEditLoading, setIsEditLoading] = useState(false)
@@ -87,6 +90,30 @@ const PostCard = ({ post, isOwner, onDelete, onEdit, accentColor, isModerator, i
   const handleDeleteComment = async (commentId) => {
     if (!user?.id) return
     await deleteComment(post._id, commentId)
+  }
+
+  const handleStartEditComment = (comment) => {
+    setEditingCommentId(comment._id)
+    setCommentEditText(comment.text)
+  }
+
+  const handleCancelEditComment = () => {
+    setEditingCommentId(null)
+    setCommentEditText('')
+  }
+
+  const handleSaveEditComment = async (commentId) => {
+    if (!user?.id || !commentEditText.trim() || isCommentEditLoading) return
+    setIsCommentEditLoading(true)
+    try {
+      const result = await updateComment(post._id, commentId, commentEditText.trim())
+      if (result.success) {
+        setEditingCommentId(null)
+        setCommentEditText('')
+      }
+    } finally {
+      setIsCommentEditLoading(false)
+    }
   }
 
   const handleReact = async (type) => {
@@ -186,11 +213,22 @@ const PostCard = ({ post, isOwner, onDelete, onEdit, accentColor, isModerator, i
               <div className="post-card__comment-empty">Комментариев пока нет.</div>
             ) : (
               comments.map((comment) => {
-                const canDeleteComment = comment.author?._id?.toString() === user?.id || isOwner
+                const canDeleteComment = comment.author?._id?.toString() === user?.id || isOwner || isModerator || isTeacher
+                const canEditComment = comment.author?._id?.toString() === user?.id || isModerator || isTeacher
+                const isEditingThis = editingCommentId === comment._id
                 return (
                   <div key={comment._id} className="post-card__comment-item">
                     <div className="post-card__comment-top">
                       <div className="post-card__comment-author">{getAuthorDisplayName(comment.author)}</div>
+                      {canEditComment && !isEditingThis && (
+                        <button
+                          type="button"
+                          className="post-card__comment-edit"
+                          onClick={() => handleStartEditComment(comment)}
+                        >
+                          Изменить
+                        </button>
+                      )}
                       {canDeleteComment && (
                         <button
                           type="button"
@@ -201,7 +239,39 @@ const PostCard = ({ post, isOwner, onDelete, onEdit, accentColor, isModerator, i
                         </button>
                       )}
                     </div>
-                    <div className="post-card__comment-text">{comment.text}</div>
+                    {isEditingThis ? (
+                      <form
+                        className="post-card__comment-edit-form"
+                        onSubmit={(e) => { e.preventDefault(); handleSaveEditComment(comment._id) }}
+                      >
+                        <input
+                          type="text"
+                          className="post-card__comment-edit-input"
+                          value={commentEditText}
+                          onChange={(e) => setCommentEditText(e.target.value)}
+                          maxLength={300}
+                          autoFocus
+                        />
+                        <div className="post-card__comment-edit-actions">
+                          <button
+                            type="submit"
+                            className="post-card__comment-edit-save"
+                            disabled={isCommentEditLoading || !commentEditText.trim()}
+                          >
+                            {isCommentEditLoading ? 'Сохранение...' : 'Сохранить'}
+                          </button>
+                          <button
+                            type="button"
+                            className="post-card__comment-edit-cancel"
+                            onClick={handleCancelEditComment}
+                          >
+                            Отмена
+                          </button>
+                        </div>
+                      </form>
+                    ) : (
+                      <div className="post-card__comment-text">{comment.text}</div>
+                    )}
                     <div className="post-card__comment-meta">
                       <span>{new Date(comment.createdAt).toLocaleString()}</span>
                     </div>

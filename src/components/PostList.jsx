@@ -46,7 +46,7 @@ const PostList = () => {
             isModerator={isModerator}
             isTeacher={isTeacher}
             onDelete={(isOwner || isModerator || isTeacher) ? () => deletePost(post._id) : undefined}
-            onEdit={(postId, text) => updatePost(postId, text)}
+            onEdit={(isOwner || isModerator || isTeacher) ? (postId, text) => updatePost(postId, text) : undefined}
           />
         )
       })}

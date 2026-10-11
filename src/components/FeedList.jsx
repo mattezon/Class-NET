@@ -111,7 +111,10 @@ const FeedList = () => {
           )
         } else if (item.type === 'poll') {
           const poll = item.data
-          const isCreator = poll.creator?.id === user?.id
+          const isOwner = poll.creator?.id === user?.id
+          const isModerator = user?.moderator === true
+          const isTeacher = user?.role === 'teacher'
+          const isCreator = isOwner || isModerator || isTeacher
           const creatorName = poll.creator?.username || poll.creator?.displayName || poll.creator?.email?.split('@')[0] || 'Пользователь'
 
           return (

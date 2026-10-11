@@ -224,6 +224,73 @@
   text-decoration: underline;
 }
 
+/* Редактирование комментария */
+.post-card__comment-edit {
+  background: transparent;
+  border: none;
+  color: var(--primary);
+  cursor: pointer;
+  font-size: 0.92rem;
+  padding: 0;
+  margin-right: 12px;
+}
+
+.post-card__comment-edit:hover {
+  text-decoration: underline;
+}
+
+.post-card__comment-edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.post-card__comment-edit-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.1));
+  border-radius: 10px;
+  background: var(--surface-strong);
+  color: var(--text);
+  font-size: 0.95rem;
+}
+
+.post-card__comment-edit-input:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.post-card__comment-edit-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.post-card__comment-edit-save {
+  padding: 6px 14px;
+  border: none;
+  border-radius: 8px;
+  background: var(--primary);
+  color: #fff;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.post-card__comment-edit-save:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.post-card__comment-edit-cancel {
+  padding: 6px 14px;
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.1));
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
 .post-card__comment-empty {
   padding: 14px;
   border-radius: 14px;

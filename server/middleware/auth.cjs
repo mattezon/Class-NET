@@ -39,7 +39,8 @@ const protect = async (req, res, next) => {
       username: user.username,
       showUsername: user.showUsername,
       color: user.color,
-      moderator: user.moderator === true
+      moderator: user.moderator === true,
+      role: user.role
     }
     next()
   } catch (error) {
@@ -69,7 +70,8 @@ const optionalAuth = async (req, res, next) => {
           username: user.username,
           showUsername: user.showUsername,
           color: user.color,
-          moderator: user.moderator === true
+          moderator: user.moderator === true,
+          role: user.role
         }
       }
     } catch (error) {

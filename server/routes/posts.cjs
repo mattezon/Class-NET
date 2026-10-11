@@ -7,6 +7,7 @@ const {
   updatePost, 
   deletePost,
   deleteComment,
+  updateComment,
   likePost,
   getComments,
   createComment,
@@ -22,6 +23,7 @@ router.get('/:id', getPost);
 router.get('/:id/comments', getComments);
 router.get('/:id/user-reaction', protect, getUserReaction);
 router.post('/:id/comments', protect, createComment);
+router.put('/:postId/comments/:commentId', protect, updateComment);
 router.delete('/:postId/comments/:commentId', protect, deleteComment);
 router.put('/:id', protect, updatePost);
 router.delete('/:id', protect, deletePost);

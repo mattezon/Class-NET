@@ -324,6 +324,62 @@ exports.createComment = async (req, res) => {
   }
 };
 
+// @desc    Редактировать комментарий
+// @route   PUT /api/posts/:postId/comments/:commentId
+// @access  Private (автор, модератор или учитель)
+exports.updateComment = async (req, res) => {
+  try {
+    const { postId, commentId } = req.params;
+    const { text } = req.body;
+    const userId = req.user?.id;
+
+    if (!text || !text.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Пожалуйста, укажите текст комментария'
+      });
+    }
+
+    const comment = await Comment.findById(commentId);
+    if (!comment || comment.post.toString() !== postId) {
+      return res.status(404).json({
+        success: false,
+        message: 'Комментарий не найден'
+      });
+    }
+
+    const isCommentAuthor = comment.author.toString() === userId;
+    const isModerator = req.user?.moderator === true;
+    const isTeacher = req.user?.role === 'teacher';
+
+    // Редактировать может автор комментария, модератор или учитель
+    if (!userId || (!isCommentAuthor && !isModerator && !isTeacher)) {
+      return res.status(403).json({
+        success: false,
+        message: 'Нет доступа к редактированию этого комментария'
+      });
+    }
+
+    comment.text = text.trim();
+    await comment.save();
+
+    await comment.populate('author', '_id email username displayName showUsername color');
+
+    console.log(`✏️ Комментарий ${commentId} отредактирован пользователем ${req.user.email}`);
+
+    return res.status(200).json({
+      success: true,
+      message: 'Комментарий обновлён',
+      comment
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
 // @desc    Удалить комментарий
 // @route   DELETE /api/posts/:postId/comments/:commentId
 // @access  Private
@@ -343,8 +399,11 @@ exports.deleteComment = async (req, res) => {
     const post = await Post.findById(postId);
     const isCommentAuthor = comment.author.toString() === userId;
     const isPostAuthor = post && post.author.toString() === userId;
+    const isModerator = req.user?.moderator === true;
+    const isTeacher = req.user?.role === 'teacher';
 
-    if (!userId || (!isCommentAuthor && !isPostAuthor)) {
+    // Автор комментария, автор поста, модератор или учитель могут удалить комментарий
+    if (!userId || (!isCommentAuthor && !isPostAuthor && !isModerator && !isTeacher)) {
       return res.status(403).json({
         success: false,
         message: 'Нет доступа к удалению этого комментария'

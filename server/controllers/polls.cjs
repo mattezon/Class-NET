@@ -216,8 +216,10 @@ exports.deletePoll = async (req, res) => {
       });
     }
 
-    // Удалять может только создатель
-    if (String(poll.creator) !== String(userId)) {
+    // Удалять может создатель, модератор или учитель
+    const isModerator = req.user?.moderator === true;
+    const isTeacher = req.user?.role === 'teacher';
+    if (String(poll.creator) !== String(userId) && !isModerator && !isTeacher) {
       return res.status(403).json({
         success: false,
         message: 'Только создатель может удалить опрос'

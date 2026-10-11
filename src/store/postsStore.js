@@ -143,6 +143,30 @@ const usePostsStore = create((set, get) => ({
     }
   },
 
+  // Отредактировать комментарий
+  updateComment: async (postId, commentId, text) => {
+    try {
+      const response = await axios.put(`/api/posts/${postId}/comments/${commentId}`, { text })
+
+      if (response.data.success) {
+        set({
+          commentsByPost: {
+            ...get().commentsByPost,
+            [postId]: (get().commentsByPost[postId] || []).map(comment =>
+              comment._id === commentId ? response.data.comment : comment
+            )
+          }
+        })
+        return { success: true }
+      }
+    } catch (error) {
+      handleUnauthorized(error)
+      const message = error.response?.data?.message || 'Ошибка при обновлении комментария'
+      set({ error: message })
+      return { success: false, message }
+    }
+  },
+
   // Удалить комментарий
   deleteComment: async (postId, commentId) => {
     try {
