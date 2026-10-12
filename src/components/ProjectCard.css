@@ -1,8 +1,9 @@
-.project-card {
+﻿.project-card {
   display: flex;
   flex-direction: column;
   gap: 10px;
   padding: 16px;
+  position: relative;
   background: var(--card-bg, #fff);
   border: 1px solid var(--border_color, #e5e7eb);
   border-left: 4px solid var(--user-accent, var(--primary, #3b82f6));
@@ -18,6 +19,8 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
+  /* Отступ под иконку «Удалить проект» в правом верхнем углу */
+  padding-right: 44px;
 }
 
 .project-card__title {
@@ -47,6 +50,34 @@
   gap: 8px;
 }
 
+/* Кнопка «Удалить проект» — иконка в правом верхнем углу */
+.project-card .project-card__delete-corner {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 34px;
+  height: 34px;
+  min-width: 0;
+  padding: 0;
+  font-size: 15px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Вертикальный блок действий создателя */
+.project-card__owner-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.project-card__owner-actions .project-card__btn {
+  width: 100%;
+}
+
 .project-card__btn {
   padding: 6px 12px;
   border: 1px solid var(--border_color, #d1d5db);
@@ -60,6 +91,21 @@
   border-color: var(--primary, #3b82f6);
   background: var(--primary, #3b82f6);
   color: #fff;
+}
+
+.project-card__btn--leave {
+  border-color: var(--danger, #ef4444);
+  background: transparent;
+  color: var(--danger, #ef4444);
+}
+
+.project-card__btn--leave:hover {
+  background: rgba(239, 68, 68, 0.08);
+}
+
+.project-card__btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .project-card__note {
@@ -83,3 +129,95 @@
   color: var(--danger, #ef4444);
   font-size: 12px;
 }
+.project-card__badge--done {
+  background: var(--warning, #f59e0b);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 999px;
+  padding: 2px 8px;
+  margin-left: 8px;
+}
+
+/* Панель участников (только создатель) */
+.project-card__participants-panel {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--border_color, #d1d5db);
+  border-radius: 10px;
+  background: var(--surface-strong, #f9fafb);
+  font-size: 13px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.project-card__participants-empty {
+  color: var(--muted, #9ca3af);
+  font-size: 12px;
+  text-align: center;
+  padding: 8px 0;
+}
+
+.project-card__participant-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.project-card__participant-name {
+  color: var(--text, #111827);
+  font-weight: 500;
+}
+
+.project-card__btn--participants {
+  width: 100%;
+  justify-content: flex-start;
+}
+
+/* Кнопка «Завершить проект» — пользовательский цвет */
+.project-card__btn--complete {
+  border-color: var(--user-accent, var(--primary, #3b82f6));
+  background: var(--user-accent, var(--primary, #3b82f6));
+  color: var(--primary-contrast, #fff);
+}
+
+.project-card__btn--complete:hover {
+  filter: brightness(1.08);
+}
+
+.project-card__btn--delete {
+  width: 100%;
+  border-color: var(--danger, #ef4444);
+  background: transparent;
+  color: var(--danger, #ef4444);
+}
+
+.project-card__btn--delete:hover {
+  background: rgba(239, 68, 68, 0.08);
+}
+
+.project-card__btn--remove {
+  border: 1px solid var(--border_color, #d1d5db);
+  background: transparent;
+  color: var(--danger, #ef4444);
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+}
+
+.project-card__btn--remove:hover {
+  background: rgba(239, 68, 68, 0.08);
+}
+
+.project-card__participant-row:disabled .project-card__btn--remove,
+.project-card__btn--remove:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.project-card__state--done {
+  color: var(--warning, #b45309);
+}
+
