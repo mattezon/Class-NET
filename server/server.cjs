@@ -64,6 +64,7 @@ const startServer = async () => {
     app.use(cookieParser());
 
     app.set('io', io);
+  globalThis.__io = io;
 
     // Аутентификация сокетов по JWT (передаётся в auth.token или query.token)
     io.use((socket, next) => {

@@ -70,6 +70,83 @@ const useProjectsStore = create((set, get) => ({
     }
   },
 
+  // Отменить участие в проекте (выйти из участников)
+  leaveProject: async (projectId) => {
+    try {
+      const response = await axios.post(`/api/projects/${projectId}/leave`)
+      if (response.data.success) {
+        set({
+          projects: get().projects.map((p) =>
+            p.id === projectId
+              ? { ...p, participants: response.data.participants || [] }
+              : p
+          )
+        })
+        return { success: true }
+      }
+    } catch (error) {
+      handleUnauthorized(error)
+      const message = error.response?.data?.message || 'Ошибка при отмене участия'
+      set({ error: message })
+      return { success: false, message }
+    }
+  },
+
+  // Исключить участника из проекта (создатель)
+  removeParticipant: async (projectId, userId) => {
+    try {
+      const response = await axios.delete(`/api/projects/${projectId}/participants/${userId}`)
+      if (response.data.success) {
+        set({
+          projects: get().projects.map((p) =>
+            p.id === projectId ? { ...p, participants: response.data.participants || [] } : p
+          )
+        })
+        return { success: true }
+      }
+    } catch (error) {
+      handleUnauthorized(error)
+      const message = error.response?.data?.message || 'Ошибка при исключении участника'
+      set({ error: message })
+      return { success: false, message }
+    }
+  },
+
+  // Завершить проект (создатель)
+  completeProject: async (projectId) => {
+    try {
+      const response = await axios.post(`/api/projects/${projectId}/complete`)
+      if (response.data.success) {
+        const updated = response.data.project
+        set({
+          projects: get().projects.map((p) => (p.id === projectId ? { ...p, ...updated } : p))
+        })
+        return { success: true }
+      }
+    } catch (error) {
+      handleUnauthorized(error)
+      const message = error.response?.data?.message || 'Ошибка при завершении проекта'
+      set({ error: message })
+      return { success: false, message }
+    }
+  },
+
+  // Удалить проект (создатель)
+  deleteProject: async (projectId) => {
+    try {
+      const response = await axios.delete(`/api/projects/${projectId}`)
+      if (response.data.success) {
+        set({ projects: get().projects.filter((p) => p.id !== projectId) })
+        return { success: true }
+      }
+    } catch (error) {
+      handleUnauthorized(error)
+      const message = error.response?.data?.message || 'Ошибка при удалении проекта'
+      set({ error: message })
+      return { success: false, message }
+    }
+  },
+
   clearError: () => set({ error: null })
 }))
 

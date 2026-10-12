@@ -3,7 +3,11 @@ const protect = require('../middleware/auth.cjs');
 const {
   createProject,
   getProjects,
-  participateProject
+  participateProject,
+  cancelParticipation,
+  removeParticipant,
+  completeProject,
+  deleteProject
 } = require('../controllers/projects.cjs');
 
 const router = express.Router();
@@ -14,5 +18,9 @@ router.get('/', getProjects);
 // Private routes
 router.post('/', protect, createProject);
 router.post('/:id/participate', protect, participateProject);
+router.post('/:id/leave', protect, cancelParticipation);
+router.post('/:id/complete', protect, completeProject);
+router.delete('/:id/participants/:userId', protect, removeParticipant);
+router.delete('/:id', protect, deleteProject);
 
 module.exports = router;
