@@ -123,6 +123,25 @@ const usePollsStore = create((set, get) => ({
     }
   },
 
+  // Удалить свой ответ в опросе
+  removeVote: async (pollId) => {
+    try {
+      const response = await axios.delete(`/api/polls/${pollId}/vote`)
+      if (response.data.success) {
+        const updated = response.data.poll
+        set({
+          polls: get().polls.map((p) => (p.id === pollId ? updated : p))
+        })
+        return { success: true, poll: updated }
+      }
+    } catch (error) {
+      handleUnauthorized(error)
+      const message = error.response?.data?.message || 'Ошибка при удалении ответа'
+      set({ error: message })
+      return { success: false, message }
+    }
+  },
+
   clearError: () => set({ error: null })
 }))
 

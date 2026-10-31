@@ -378,3 +378,101 @@ exports.votePoll = async (req, res) => {
   }
 };
 
+// @desc    Удалить свой ответ в опросе
+// @route   DELETE /api/polls/:id/vote
+// @access  Private
+exports.removeVotePoll = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user?.id;
+
+    const poll = await Poll.findById(id);
+    if (!poll) {
+      return res.status(404).json({
+        success: false,
+        message: 'Опрос не найден'
+      });
+    }
+
+    // Голосование завершено — ответ изменить нельзя
+    if (poll.endsAt && new Date(poll.endsAt) <= new Date()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Голосование завершено'
+      });
+    }
+
+    const key = userId.toString();
+    // userChoices — всегда объект { userId: index или [indices] }
+    // Исключаем внутренние поля Mongoose ($...)
+    const choicesObj = {};
+    if (poll.userChoices) {
+      const raw = typeof poll.userChoices === 'object' ? poll.userChoices : {};
+      for (const k of Object.keys(raw)) {
+        if (!k.startsWith('$')) {
+          choicesObj[k] = raw[k];
+        }
+      }
+    }
+
+    const prev = choicesObj[key];
+    const hadAnswer = prev !== undefined && prev !== null &&
+      (!(poll.allowsMultiple) || (Array.isArray(prev) && prev.length > 0));
+
+    if (!hadAnswer) {
+      return res.status(400).json({
+        success: false,
+        message: 'Вы ещё не голосовали в этом опросе'
+      });
+    }
+
+    // Возвращаем счётчики вариантов к состоянию до голосования
+    if (poll.allowsMultiple) {
+      const choices = Array.isArray(prev) ? prev : [prev];
+      for (const idx of choices) {
+        const i = Number(idx);
+        if (i >= 0 && i < poll.options.length) {
+          poll.options[i].votes = Math.max(0, poll.options[i].votes - 1);
+        }
+      }
+    } else {
+      const i = Number(prev);
+      if (i >= 0 && i < poll.options.length) {
+        poll.options[i].votes = Math.max(0, poll.options[i].votes - 1);
+      }
+    }
+
+    delete choicesObj[key];
+    poll.voters = poll.voters.filter(v => String(v) !== key);
+
+    const userChoicesMap = new Map(Object.entries(choicesObj));
+
+    const updatedPoll = await Poll.findOneAndUpdate(
+      { _id: id },
+      {
+        userChoices: userChoicesMap,
+        options: poll.options,
+        voters: poll.voters
+      },
+      { new: true, runValidators: true }
+    ).populate('creator', '_id email username displayName showUsername color');
+
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('poll:update', serializePoll(updatedPoll, userId));
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Ответ удалён',
+      poll: serializePoll(updatedPoll, userId)
+    });
+  } catch (error) {
+    console.error('Remove vote poll error:', error);
+    return res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+

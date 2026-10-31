@@ -48,6 +48,7 @@ const PollList = () => {
               key={poll.id}
               poll={poll}
               isCreator={user?.id === poll.creator?.id || isModerator || isTeacher}
+              accentColor={poll.creator?.color}
               onDelete={handleDelete}
             />
           ))}

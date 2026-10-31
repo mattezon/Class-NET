@@ -4,7 +4,7 @@
   gap: 12px;
   padding: 20px 24px;
   background: var(--surface);
-  border: 2px solid var(--border);
+  border: 2px solid var(--poll-accent, var(--border));
   border-radius: 14px;
   margin-bottom: 18px;
   box-shadow: 0 2px 10px var(--card-shadow);
@@ -76,10 +76,8 @@
   transform: translateY(-1px);
 }
 
-.poll-card__option.active {
-  border-color: var(--user-accent, var(--primary));
-  background: var(--user-accent, var(--primary));
-  color: #fff;
+/* Выбранный вариант — цвет голосующего (инлайн-стиль в компоненте имеет приоритет) */
+.poll-card .poll-card__option.active {
   font-weight: 600;
 }
 
@@ -115,8 +113,32 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
   font-size: 0.9rem;
   color: var(--muted);
+}
+
+/* Кнопка «Удалить ответ» — в футере на ряду с участниками и таймером */
+.poll-card__remove-vote {
+  margin-left: auto;
+  border: 1px solid var(--danger);
+  background: var(--danger-bg);
+  color: var(--danger);
+  cursor: pointer;
+  font-size: 0.85rem;
+  padding: 5px 10px;
+  border-radius: 8px;
+  transition: opacity 0.15s ease, background 0.2s;
+}
+
+.poll-card__remove-vote:hover:not(:disabled) {
+  background: rgba(194, 61, 45, 0.14);
+}
+
+.poll-card__remove-vote:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .poll-card__timer {

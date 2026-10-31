@@ -1,17 +1,28 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import usePollsStore from '../store/pollsStore'
 import useAuthStore from '../store/authStore'
 import { getAuthorDisplayName } from '../utils/userName'
 import './PollCard.css'
 
-const PollCard = ({ poll, isCreator = false, onDelete }) => {
+const PollCard = ({ poll, isCreator = false, onDelete, accentColor }) => {
   const { user } = useAuthStore()
-  const { votePoll, error } = usePollsStore()
+  const { votePoll, removeVote, error } = usePollsStore()
   const [isVoting, setIsVoting] = useState(false)
+  const [isRemoving, setIsRemoving] = useState(false)
   const [localPoll, setLocalPoll] = useState(poll)
 
+  // Синхронизация с обновлением из стора (например, poll:update по сокету)
+  useEffect(() => {
+    setLocalPoll(poll)
+  }, [poll])
+
+  // Голосовать: повторный клик по своему варианту в одиночном опросе — снять голос
   const handleVote = async (index) => {
     if (localPoll.hasEnded || !user?.id || isVoting) return
+    if (!allowsMultiple && userVote === index) {
+      await handleRemoveVote()
+      return
+    }
     setIsVoting(true)
     const res = await votePoll(localPoll.id, index)
     setIsVoting(false)
@@ -20,9 +31,23 @@ const PollCard = ({ poll, isCreator = false, onDelete }) => {
     }
   }
 
+  const handleRemoveVote = async () => {
+    if (localPoll.hasEnded || !user?.id || isRemoving) return
+    setIsRemoving(true)
+    const res = await removeVote(localPoll.id)
+    setIsRemoving(false)
+    if (res.success) {
+      setLocalPoll(res.poll)
+    }
+  }
+
   const voted = !!localPoll.voted
-  const userVote = localPoll.userVote
+  const userVoteRaw = localPoll.userVote
   const allowsMultiple = localPoll.allowsMultiple
+  // Нормализуем голос пользователя: число для одиночного, массив чисел для мульти
+  const userVote = allowsMultiple
+    ? (Array.isArray(userVoteRaw) ? userVoteRaw.map(Number) : [])
+    : (userVoteRaw !== null && userVoteRaw !== undefined ? Number(userVoteRaw) : null)
   const total = localPoll.total || 0
   const myPercent = (opt) => (total > 0 ? Math.round((opt.votes / total) * 100) : 0)
 
@@ -60,8 +85,18 @@ const PollCard = ({ poll, isCreator = false, onDelete }) => {
   // Для одиночного — показываем после голосования или окончания
   const showResults = localPoll.hasEnded || (voted && !allowsMultiple)
 
+  // Есть ли у текущего пользователя сохранённый ответ (можно удалить)
+  const hasMyAnswer = !localPoll.hasEnded && (
+    allowsMultiple ? (Array.isArray(userVote) && userVote.length > 0) : userVote !== null && userVote !== undefined
+  )
+
   return (
-    <div className="poll-card">
+    <div
+      className="poll-card"
+      style={{
+        '--poll-accent': accentColor || undefined
+      }}
+    >
       <div className="poll-card__header">
         <div className="poll-card__header-top">
           <span className="poll-card__question">{localPoll.question}</span>
@@ -91,8 +126,16 @@ const PollCard = ({ poll, isCreator = false, onDelete }) => {
               key={opt.index}
               type="button"
               className={`poll-card__option ${isSelected ? 'active' : ''} ${showResults ? 'result' : ''}`}
+              style={{
+                ...(isSelected && {
+                  // Выбранный вариант — цвет текущего пользователя
+                  borderColor: accentColor || undefined,
+                  background: accentColor || undefined,
+                  color: '#fff'
+                })
+              }}
               onClick={() => handleVote(opt.index)}
-              disabled={localPoll.hasEnded || isVoting || showResults}
+              disabled={localPoll.hasEnded || isVoting || isRemoving || (showResults && !isSelected)}
             >
               <span className="poll-card__option-text">{opt.text}</span>
               {showResults && (
@@ -108,6 +151,16 @@ const PollCard = ({ poll, isCreator = false, onDelete }) => {
       <div className="poll-card__footer">
         <span>👥 {localPoll.votersCount} участников</span>
         {timeLeft && <span className="poll-card__timer">{timeLeft}</span>}
+        {hasMyAnswer && (
+          <button
+            type="button"
+            className="poll-card__remove-vote"
+            onClick={handleRemoveVote}
+            disabled={isRemoving}
+          >
+            {isRemoving ? 'Удаление…' : 'Удалить ответ'}
+          </button>
+        )}
       </div>
 
       {error && <div className="poll-card__error">{error}</div>}

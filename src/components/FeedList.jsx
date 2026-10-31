@@ -129,6 +129,7 @@ const FeedList = () => {
                 }
               }}
               isCreator={isCreator}
+              accentColor={poll.creator?.color}
               onDelete={isCreator ? () => handleDeletePoll(poll.id, poll.question) : undefined}
             />
           )
