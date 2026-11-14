@@ -20,6 +20,15 @@
   --body-bg: radial-gradient(circle at top left, rgba(76, 122, 255, 0.14), transparent 30%),
               radial-gradient(circle at bottom right, rgba(0, 113, 233, 0.12), transparent 25%),
               #f3f7fc;
+  /* Алиасы для компонентов проектов/опросов */
+  --card-bg: var(--surface);
+  --border-color: var(--border);
+  --text-color: var(--text);
+  --text-secondary: var(--muted);
+  --success: #15803d;
+  --success-bg: #dcfce7;
+  --success-text: #166534;
+  --warning: #d97706;
 }
 
 [data-theme="dark"] {
@@ -43,6 +52,15 @@
   --danger-bg: rgba(255, 110, 122, 0.16);
   --card-shadow: rgba(0, 0, 0, 0.4);
   --body-bg: #121318;
+  /* Алиасы для компонентов проектов/опросов */
+  --card-bg: var(--surface);
+  --border-color: var(--border);
+  --text-color: var(--text);
+  --text-secondary: var(--muted);
+  --success: #4ade80;
+  --success-bg: rgba(74, 222, 128, 0.14);
+  --success-text: #4ade80;
+  --warning: #fbbf24;
 }
 
 [data-theme="dark"],

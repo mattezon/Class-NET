@@ -10,7 +10,7 @@
 .project-list__message {
   padding: 10px 14px;
   border-radius: 8px;
-  background: var(--success, #dcfce7);
+  background: var(--success-bg, #dcfce7);
   color: var(--success-text, #166534);
   font-size: 14px;
 }

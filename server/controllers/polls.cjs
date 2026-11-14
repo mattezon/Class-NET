@@ -6,6 +6,25 @@ const getUserName = (user) => {
   return user.username || user.displayName || (user.email ? user.email.split('@')[0] : '') || '';
 };
 
+// userChoices в схеме — Mongoose Map: приводим к обычному объекту
+// { userId: index или [indices] }, исключая внутренние поля Mongoose ($...)
+const getUserChoicesObj = (poll) => {
+  if (!poll.userChoices) return {};
+  let raw;
+  if (poll.userChoices instanceof Map) {
+    raw = Object.fromEntries(poll.userChoices);
+  } else if (typeof poll.userChoices === 'object') {
+    raw = poll.userChoices;
+  } else {
+    return {};
+  }
+  const clean = {};
+  for (const k of Object.keys(raw)) {
+    if (!k.startsWith('$')) clean[k] = raw[k];
+  }
+  return clean;
+};
+
 // Привести опрос к виду для клиента
 const serializePoll = (poll, currentUserId = null) => {
   const total = (poll.options || []).reduce((sum, o) => sum + (o.votes || 0), 0);
@@ -20,17 +39,7 @@ const serializePoll = (poll, currentUserId = null) => {
   if (currentUserId) {
     const userIdStr = String(currentUserId);
     
-    // userChoices — всегда объект { userId: index или [indices] }
-    // Исключаем внутренние поля Mongoose ($...)
-    const choicesObj = {};
-    if (poll.userChoices) {
-      const raw = typeof poll.userChoices === 'object' ? poll.userChoices : {};
-      for (const k of Object.keys(raw)) {
-        if (!k.startsWith('$')) {
-          choicesObj[k] = raw[k];
-        }
-      }
-    }
+    const choicesObj = getUserChoicesObj(poll);
     
     const v = choicesObj[userIdStr];
     
@@ -281,17 +290,7 @@ exports.votePoll = async (req, res) => {
     }
 
     const key = userId.toString();
-    // userChoices — всегда объект { userId: index или [indices] }
-    // Исключаем внутренние поля Mongoose ($...)
-    const choicesObj = {};
-    if (poll.userChoices) {
-      const raw = typeof poll.userChoices === 'object' ? poll.userChoices : {};
-      for (const k of Object.keys(raw)) {
-        if (!k.startsWith('$')) {
-          choicesObj[k] = raw[k];
-        }
-      }
-    }
+    const choicesObj = getUserChoicesObj(poll);
     
     const prev = choicesObj[key];
     const hasVoted = poll.voters.some(v => String(v) === key);
@@ -403,17 +402,7 @@ exports.removeVotePoll = async (req, res) => {
     }
 
     const key = userId.toString();
-    // userChoices — всегда объект { userId: index или [indices] }
-    // Исключаем внутренние поля Mongoose ($...)
-    const choicesObj = {};
-    if (poll.userChoices) {
-      const raw = typeof poll.userChoices === 'object' ? poll.userChoices : {};
-      for (const k of Object.keys(raw)) {
-        if (!k.startsWith('$')) {
-          choicesObj[k] = raw[k];
-        }
-      }
-    }
+    const choicesObj = getUserChoicesObj(poll);
 
     const prev = choicesObj[key];
     const hadAnswer = prev !== undefined && prev !== null &&

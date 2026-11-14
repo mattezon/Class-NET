@@ -94,7 +94,9 @@ const PollCard = ({ poll, isCreator = false, onDelete, accentColor }) => {
     <div
       className="poll-card"
       style={{
-        '--poll-accent': accentColor || undefined
+        // Цвет рамки и выделения — цвет автора опроса (фолбэк — цвет текущего пользователя)
+        '--poll-accent': accentColor || undefined,
+        '--poll-selected': accentColor || user?.color || undefined
       }}
     >
       <div className="poll-card__header">
@@ -126,14 +128,6 @@ const PollCard = ({ poll, isCreator = false, onDelete, accentColor }) => {
               key={opt.index}
               type="button"
               className={`poll-card__option ${isSelected ? 'active' : ''} ${showResults ? 'result' : ''}`}
-              style={{
-                ...(isSelected && {
-                  // Выбранный вариант — цвет текущего пользователя
-                  borderColor: accentColor || undefined,
-                  background: accentColor || undefined,
-                  color: '#fff'
-                })
-              }}
               onClick={() => handleVote(opt.index)}
               disabled={localPoll.hasEnded || isVoting || isRemoving || (showResults && !isSelected)}
             >

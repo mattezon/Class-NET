@@ -76,9 +76,12 @@
   transform: translateY(-1px);
 }
 
-/* Выбранный вариант — цвет голосующего (инлайн-стиль в компоненте имеет приоритет) */
+/* Выбранный вариант — цвет автора опроса (фолбэк: цвет пользователя → акцент темы) */
 .poll-card .poll-card__option.active {
   font-weight: 600;
+  border-color: var(--poll-selected, var(--user-accent, var(--primary)));
+  background: var(--poll-selected, var(--user-accent, var(--primary)));
+  color: #fff;
 }
 
 .poll-card__option.active .poll-card__option-stat {

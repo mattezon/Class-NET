@@ -5,7 +5,7 @@
   padding: 20px;
   background: var(--card-bg, #f8f9fa);
   border-radius: 12px;
-  border: 1px solid var(--border_color, #e5e7eb);
+  border: 1px solid var(--border-color, #e5e7eb);
 }
 
 .poll-form__title {
@@ -18,7 +18,7 @@
 .poll-form__option-input {
   width: 100%;
   padding: 10px 12px;
-  border: 1px solid var(--border_color, #d1d5db);
+  border: 1px solid var(--border-color, #d1d5db);
   border-radius: 8px;
   background: var(--input-bg, #fff);
   color: var(--text-color, #111);
@@ -65,7 +65,7 @@
 }
 
 .poll-form__btn--add {
-  border: 1px solid var(--border_color, #d1d5db);
+  border: 1px solid var(--border-color, #d1d5db);
   background: var(--card-bg, #f3f4f6);
 }
 
@@ -91,7 +91,7 @@
   flex-direction: column;
   gap: 10px;
   padding: 10px 0;
-  border-top: 1px solid var(--border_color, #e5e7eb);
+  border-top: 1px solid var(--border-color, #e5e7eb);
 }
 
 .poll-form__checkbox-label {
@@ -119,7 +119,7 @@
 
 .poll-form__datetime input {
   padding: 8px 10px;
-  border: 1px solid var(--border_color, #d1d5db);
+  border: 1px solid var(--border-color, #d1d5db);
   border-radius: 8px;
   background: var(--input-bg, #fff);
   color: var(--text-color, #111);
