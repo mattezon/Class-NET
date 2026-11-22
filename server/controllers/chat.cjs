@@ -278,6 +278,97 @@ exports.getChatMessages = async (req, res) => {
   }
 };
 
+exports.deleteMessage = async (req, res) => {
+  try {
+    const { chatId, messageId } = req.params;
+    const userId = req.user?.id;
+
+    const chat = await Chat.findOne({ _id: chatId, participants: userId });
+    if (!chat) {
+      return res.status(404).json({ success: false, message: 'Чат не найден' });
+    }
+
+    const message = await Message.findOne({ _id: messageId, chat: chatId });
+    if (!message) {
+      return res.status(404).json({ success: false, message: 'Сообщение не найдено' });
+    }
+
+    const isSender = String(message.sender) === String(userId);
+    const isChatCreator = chat.createdBy && String(chat.createdBy) === String(userId);
+    if (!isSender && !isChatCreator) {
+      return res.status(403).json({ success: false, message: 'Нельзя удалить чужое сообщение' });
+    }
+
+    await Message.deleteOne({ _id: messageId });
+
+    const last = await Message.find({ chat: chatId })
+      .sort({ createdAt: -1, _id: -1 })
+      .limit(1)
+      .lean();
+    await Chat.findByIdAndUpdate(chatId, {
+      lastMessage: last.length ? last[0]._id : null,
+      updatedAt: new Date()
+    });
+
+    const io = req.app.get('io');
+    if (io) {
+      io.to(chatId).emit('chat:message-deleted', { chatId, messageId: String(messageId) });
+    }
+
+    return res.json({ success: true, messageId: String(messageId) });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+exports.clearChatMessages = async (req, res) => {
+  try {
+    const { chatId } = req.params;
+    const userId = req.user?.id;
+
+    const chat = await Chat.findOne({ _id: chatId, participants: userId });
+    if (!chat) {
+      return res.status(404).json({ success: false, message: 'Чат не найден' });
+    }
+
+    await Message.deleteMany({ chat: chatId });
+    await Chat.findByIdAndUpdate(chatId, { lastMessage: null, updatedAt: new Date() });
+
+    const io = req.app.get('io');
+    if (io) {
+      io.to(chatId).emit('chat:messages-cleared', { chatId });
+    }
+
+    return res.json({ success: true });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+exports.deleteChat = async (req, res) => {
+  try {
+    const { chatId } = req.params;
+    const userId = req.user?.id;
+
+    const chat = await Chat.findOne({ _id: chatId, participants: userId });
+    if (!chat) {
+      return res.status(404).json({ success: false, message: 'Чат не найден' });
+    }
+
+    await Message.deleteMany({ chat: chatId });
+    await Chat.deleteOne({ _id: chatId });
+
+    const io = req.app.get('io');
+    if (io) {
+      io.to(chatId).emit('chat:deleted', { chatId });
+    }
+
+    return res.json({ success: true, chatId });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 exports.sendMessage = async (req, res) => {
   try {
     const { chatId } = req.params;

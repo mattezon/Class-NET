@@ -8,9 +8,9 @@
   box-shadow: none;
   overflow: hidden;
   width: 100%;
-  flex: 1 1 auto;
+  flex: 1 1 0;
   min-height: 0;
-  height: 100%;
+  height: auto;
   align-self: stretch;
 }
 
@@ -86,9 +86,10 @@
 .chat-panel__body {
   display: grid;
   grid-template-columns: 300px minmax(0, 1fr);
-  flex: 1 1 auto;
+  grid-template-rows: minmax(0, 1fr);
+  flex: 1 1 0;
   min-height: 0;
-  height: 100%;
+  height: auto;
   overflow: hidden;
 }
 
@@ -99,6 +100,8 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .chat-panel__chat {
@@ -113,6 +116,7 @@
   padding: 12px;
   cursor: pointer;
   text-align: left;
+  user-select: none;
 }
 
 .chat-panel__chat.active {
@@ -145,23 +149,32 @@
   -webkit-box-orient: vertical;
 }
 
-.chat-panel__chat-badge {
+.chat-panel__chat-delete {
+  flex-shrink: 0;
   min-width: 28px;
   height: 28px;
+  border: 1px solid var(--danger);
   border-radius: 50%;
-  background: rgba(47, 93, 255, 0.12);
-  color: var(--user-accent, var(--primary));
+  background: var(--danger-bg);
+  color: var(--danger);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 10px;
-  font-weight: 700;
+  font-size: 12px;
+  cursor: pointer;
+  transition: filter 0.15s ease;
+}
+
+.chat-panel__chat-delete:hover {
+  filter: brightness(0.92);
 }
 
 .chat-panel__window {
   display: flex;
   flex-direction: column;
+  flex: 1 1 0;
   min-height: 0;
+  height: auto;
 }
 
 .chat-panel__window-header {
@@ -177,7 +190,7 @@
   z-index: 15;
 }
 
-.chat-panel__window-header > div {
+.chat-panel__window-header > div:first-child {
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -185,6 +198,30 @@
 
 .chat-panel__window-header small {
   color: var(--muted);
+}
+
+.chat-panel__header-actions {
+  display: flex;
+  flex-direction: row;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 8px;
+}
+
+.chat-panel__clear-messages {
+  border: 1px solid var(--danger);
+  border-radius: 999px;
+  background: var(--danger-bg);
+  color: var(--danger);
+  padding: 6px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.chat-panel__clear-messages:hover {
+  filter: brightness(0.92);
 }
 
 .chat-panel__status {
@@ -196,6 +233,8 @@
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .chat-panel__status.online {
@@ -210,13 +249,15 @@
 
 .chat-panel__messages {
   display: flex;
-  flex: 1 1 auto;
+  flex: 1 1 0;
   flex-direction: column;
   gap: 10px;
   padding: 16px 20px;
-  overflow: auto;
+  overflow-y: auto;
+  overflow-x: hidden;
   min-height: 0;
-  height: 100%;
+  height: auto;
+  overscroll-behavior: contain;
   box-sizing: border-box;
 }
 
@@ -241,9 +282,31 @@
   border-radius: 16px 16px 6px 16px;
 }
 
+.chat-panel__message-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
 .chat-panel__message span {
   font-size: 11px;
   color: var(--muted);
+}
+
+.chat-panel__message-delete {
+  border: none;
+  background: transparent;
+  color: var(--danger);
+  font-size: 12px;
+  line-height: 1;
+  padding: 2px 4px;
+  cursor: pointer;
+  opacity: 0.7;
+}
+
+.chat-panel__message-delete:hover {
+  opacity: 1;
 }
 
 .chat-panel__message p {
@@ -259,7 +322,7 @@
   gap: 10px;
   align-items: center;
   padding: 16px 20px 20px;
-  padding-bottom: calc(20px + env(safe-area-inset-bottom));
+  padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px));
   border-top: 1px solid var(--border);
   flex-shrink: 0;
   position: sticky;
@@ -337,19 +400,19 @@
 }
 
 @media (max-width: 900px) {
-  /* Цепочка высот сохраняется — сообщения скроллятся отдельно от вкладки */
-  .chat-panel {
-    overflow: hidden;
-    height: 100%;
-  }
-
+  /* Сообщения занимают всё оставшееся место и скроллятся внутри своего блока */
+  .chat-panel,
   .messenger-shell {
-    height: 100%;
+    overflow: hidden;
+    height: auto;
+    flex: 1 1 0;
+    min-height: 0;
   }
 
   .chat-panel__body {
     grid-template-columns: 1fr;
-    height: 100%;
+    grid-template-rows: auto minmax(0, 1fr);
+    height: auto;
     overflow: hidden;
   }
 
@@ -373,18 +436,56 @@
   }
 
   .chat-panel__toolbar-row {
-    flex-direction: column;
+    flex-direction: row;
+    padding: 8px 12px 6px;
+    gap: 8px;
   }
 
-  /* Фиксированная высота + внутренний скролл сообщений (отдельно от вкладки) */
-  .chat-panel__messages {
-    flex: 0 0 auto;
-    height: clamp(160px, 34vh, 260px);
-    overflow-y: auto;
+  .chat-panel__toolbar-search input {
+    padding: 8px 10px;
+  }
+
+  .chat-panel__group-button {
+    padding: 10px;
+    white-space: nowrap;
+  }
+
+  .chat-panel__sidebar {
+    padding: 6px 10px;
+  }
+
+  .chat-panel__chat {
+    padding: 6px 8px;
+    gap: 6px;
+  }
+
+  .chat-panel__chat-name {
+    font-size: 13px;
+  }
+
+  .chat-panel__chat-preview {
+    font-size: 11px;
+    -webkit-line-clamp: 1;
+  }
+
+  .chat-panel__chat-delete {
+    min-width: 24px;
+    height: 24px;
   }
 
   .chat-panel__window-header {
-    padding: 12px 16px;
+    padding: 8px 12px;
+  }
+
+  .chat-panel__messages {
+    flex: 1 1 auto;
+    min-height: 0;
+    height: auto;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .chat-panel__window-header {
     gap: 6px;
   }
 
@@ -408,7 +509,7 @@
 
   .chat-panel__composer {
     padding: 12px 12px 14px;
-    padding-bottom: calc(14px + env(safe-area-inset-bottom));
+    padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px));
   }
 
   .chat-panel__composer input {

@@ -6,7 +6,10 @@ const {
   createDirectChat,
   createGroupChat,
   getChatMessages,
-  sendMessage
+  sendMessage,
+  deleteMessage,
+  clearChatMessages,
+  deleteChat
 } = require('../controllers/chat.cjs');
 
 const router = express.Router();
@@ -17,5 +20,8 @@ router.post('/direct', protect, createDirectChat);
 router.post('/group', protect, createGroupChat);
 router.get('/:chatId/messages', protect, getChatMessages);
 router.post('/:chatId/messages', protect, sendMessage);
+router.delete('/:chatId/messages/:messageId', protect, deleteMessage);
+router.delete('/:chatId/messages', protect, clearChatMessages);
+router.delete('/:chatId', protect, deleteChat);
 
 module.exports = router;

@@ -17,7 +17,7 @@ const MainPage = ({ theme, toggleTheme }) => {
   const [activeTab, setActiveTab] = useState('feed')
 
   return (
-    <div className="main-layout">
+    <div className={`main-layout ${activeTab === 'messages' ? 'main-layout--messages' : ''}`}>
       <Sidebar activeTab={activeTab} onChangeTab={setActiveTab} theme={theme} toggleTheme={toggleTheme} />
       <div className={`main-content ${activeTab === 'messages' ? 'main-content--messages' : ''}`}>
         {activeTab === 'feed' && (

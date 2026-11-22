@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useRef, useState } from 'react'
+﻿import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import axios from 'axios'
 import { io } from 'socket.io-client'
 import useAuthStore from '../store/authStore'
@@ -34,12 +34,19 @@ const ChatPanel = () => {
     [activeChatId, messagesByChat]
   )
 
-  // Автоскролл к последнему сообщению: при смене чата и при новом сообщении
-  useEffect(() => {
+  // Автоскролл к последнему сообщению: после отрисовки списка и в следующем кадре
+  useLayoutEffect(() => {
     const el = messagesRef.current
     if (!el) return
-    el.scrollTop = el.scrollHeight
-  }, [activeChatId, activeMessages.length])
+
+    const scrollToBottom = () => {
+      el.scrollTop = el.scrollHeight
+    }
+
+    scrollToBottom()
+    const frame = requestAnimationFrame(scrollToBottom)
+    return () => cancelAnimationFrame(frame)
+  }, [activeChatId, activeMessages.length, activeMessages[activeMessages.length - 1]?.id])
 
   const formatPreview = (message) => {
     if (!message) return ''
@@ -216,6 +223,66 @@ const ChatPanel = () => {
     }
   }
 
+  const removeChatLocally = (chatId) => {
+    setChats((prev) => prev.filter((chat) => chat.id !== chatId))
+    setMessagesByChat((prev) => {
+      const next = { ...prev }
+      delete next[chatId]
+      return next
+    })
+  }
+
+  const deleteChat = async (chat) => {
+    if (!window.confirm(`Удалить чат «${getDirectChatTitle(chat)}» вместе со всеми сообщениями?`)) return
+
+    try {
+      const response = await axios.delete(`/api/chats/${chat.id}`)
+      if (response.data.success) {
+        removeChatLocally(chat.id)
+        if (activeChatIdRef.current === chat.id) {
+          activeChatIdRef.current = null
+          joinedRoomRef.current = null
+          setActiveChatId(null)
+          await refreshChats()
+        }
+      }
+    } catch (error) {
+      console.warn('Не удалось удалить чат', error)
+    }
+  }
+
+  const clearChatMessages = async () => {
+    if (!activeChatId || !window.confirm('Удалить все сообщения в этом чате?')) return
+
+    try {
+      const response = await axios.delete(`/api/chats/${activeChatId}/messages`)
+      if (response.data.success) {
+        setMessagesByChat((prev) => ({ ...prev, [activeChatId]: [] }))
+        setChats((prev) => prev.map((chat) => (
+          chat.id === activeChatId ? { ...chat, lastMessage: null } : chat
+        )))
+      }
+    } catch (error) {
+      console.warn('Не удалось удалить сообщения', error)
+    }
+  }
+
+  const deleteMessage = async (messageId) => {
+    if (!activeChatId || !window.confirm('Удалить это сообщение?')) return
+
+    try {
+      const response = await axios.delete(`/api/chats/${activeChatId}/messages/${messageId}`)
+      if (response.data.success) {
+        setMessagesByChat((prev) => ({
+          ...prev,
+          [activeChatId]: (prev[activeChatId] || []).filter((message) => message.id !== messageId)
+        }))
+      }
+    } catch (error) {
+      console.warn('Не удалось удалить сообщение', error)
+    }
+  }
+
   const sendMessage = async () => {
     if (!draft.trim() || !activeChatId) return
 
@@ -272,6 +339,34 @@ const ChatPanel = () => {
 
       appendMessageToChat(payload.chatId, incomingMessage)
       updateChatPreview(payload.chatId, incomingMessage)
+    })
+
+    socket.on('chat:message-deleted', ({ chatId, messageId }) => {
+      setMessagesByChat((prev) => ({
+        ...prev,
+        [chatId]: (prev[chatId] || []).filter((message) => message.id !== messageId)
+      }))
+      setChats((prev) => prev.map((chat) => (
+        chat.id === chatId && chat.lastMessage?.id === messageId
+          ? { ...chat, lastMessage: null }
+          : chat
+      )))
+    })
+
+    socket.on('chat:messages-cleared', ({ chatId }) => {
+      setMessagesByChat((prev) => ({ ...prev, [chatId]: [] }))
+      setChats((prev) => prev.map((chat) => (
+        chat.id === chatId ? { ...chat, lastMessage: null } : chat
+      )))
+    })
+
+    socket.on('chat:deleted', ({ chatId }) => {
+      removeChatLocally(chatId)
+      if (activeChatIdRef.current === chatId) {
+        activeChatIdRef.current = null
+        joinedRoomRef.current = null
+        setActiveChatId(null)
+      }
     })
 
     return () => {
@@ -389,18 +484,36 @@ const ChatPanel = () => {
             <p className="chat-panel__empty">Пока нет чатов</p>
           ) : (
             chats.map((chat) => (
-              <button
-                type="button"
+              <div
                 key={chat.id}
                 className={`chat-panel__chat ${activeChatId === chat.id ? 'active' : ''}`}
+                role="button"
+                tabIndex={0}
                 onClick={() => setActiveChatId(chat.id)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault()
+                    setActiveChatId(chat.id)
+                  }
+                }}
               >
                 <div className="chat-panel__chat-main">
                   <span className="chat-panel__chat-name">{getDirectChatTitle(chat)}</span>
                   <small className="chat-panel__chat-preview">{getLastMessagePreview(chat)}</small>
                 </div>
-                <span className="chat-panel__chat-badge">{chat.type === 'group' ? 'G' : 'D'}</span>
-              </button>
+                <button
+                  type="button"
+                  className="chat-panel__chat-delete"
+                  title="Удалить чат"
+                  aria-label="Удалить чат"
+                  onClick={(event) => {
+                    event.stopPropagation()
+                    deleteChat(chat)
+                  }}
+                >
+                  🗑
+                </button>
+              </div>
             ))
           )}
         </aside>
@@ -417,12 +530,22 @@ const ChatPanel = () => {
                 <div>
                   <strong>{chatTitle}</strong>
                 </div>
-                <span
-                  className={`chat-panel__status ${connected ? 'online' : 'offline'}`}
-                  title={connected ? 'Соединение с сервером активно' : 'Нет соединения с сервером'}
-                >
-                  {connected ? 'Подключено' : 'Нет соединения'}
-                </span>
+                <div className="chat-panel__header-actions">
+                  <button
+                    type="button"
+                    className="chat-panel__clear-messages"
+                    title="Удалить все сообщения в чате"
+                    onClick={clearChatMessages}
+                  >
+                    🗑 Сообщения
+                  </button>
+                  <span
+                    className={`chat-panel__status ${connected ? 'online' : 'offline'}`}
+                    title={connected ? 'Соединение с сервером активно' : 'Нет соединения с сервером'}
+                  >
+                    {connected ? 'Подключено' : 'Нет соединения'}
+                  </span>
+                </div>
               </div>
 
               <div
@@ -432,16 +555,32 @@ const ChatPanel = () => {
                 {activeMessages.length === 0 ? (
                   <p className="chat-panel__empty">Начните диалог</p>
                 ) : (
-                  activeMessages.map((message) => (
-                    <div
-                      key={message.id}
-                      className={`chat-panel__message ${message.sender?.id === user?.id ? 'self' : ''}`}
-                      style={{ borderColor: message.sender?.color || undefined }}
-                    >
-                      <span>{message.sender ? getAuthorDisplayName(message.sender) : 'User'}</span>
-                      <p>{message.text}</p>
-                    </div>
-                  ))
+                  activeMessages.map((message) => {
+                    const canDelete = message.sender?.id === user?.id || activeChat?.createdBy === user?.id
+                    return (
+                      <div
+                        key={message.id}
+                        className={`chat-panel__message ${message.sender?.id === user?.id ? 'self' : ''}`}
+                        style={{ borderColor: message.sender?.color || undefined }}
+                      >
+                        <div className="chat-panel__message-top">
+                          <span>{message.sender ? getAuthorDisplayName(message.sender) : 'User'}</span>
+                          {canDelete && (
+                            <button
+                              type="button"
+                              className="chat-panel__message-delete"
+                              title="Удалить сообщение"
+                              aria-label="Удалить сообщение"
+                              onClick={() => deleteMessage(message.id)}
+                            >
+                              🗑
+                            </button>
+                          )}
+                        </div>
+                        <p>{message.text}</p>
+                      </div>
+                    )
+                  })
                 )}
               </div>
 
