@@ -6,6 +6,7 @@ import RegisterForm from './components/RegisterForm'
 import ProtectedRoute from './components/ProtectedRoute'
 import MainPage from './pages/MainPage'
 import Dashboard from './pages/Dashboard'
+import ToastHost from './components/ToastHost'
 import './App.css'
 
 function App() {
@@ -48,6 +49,7 @@ function App() {
   return (
     <HashRouter>
       <div className="app">
+        <ToastHost />
         <Routes>
           <Route
             path="/login"

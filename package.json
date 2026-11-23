@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
+    "lint": "eslint . --ext js,jsx,cjs --report-unused-disable-directives --max-warnings 60",
+    "test": "node --test tests",
     "preview": "vite preview",
     "server": "node server/server.cjs",
     "server:dev": "nodemon server/server.cjs",

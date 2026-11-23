@@ -82,8 +82,19 @@ const startServer = async () => {
       }
     });
 
+    const onlineUsers = new Map();
+
     io.on('connection', (socket) => {
       const userId = socket.userId;
+      socket.join(`user:${userId}`);
+
+      const userSockets = onlineUsers.get(userId) || new Set();
+      userSockets.add(socket.id);
+      onlineUsers.set(userId, userSockets);
+      if (userSockets.size === 1) {
+        io.emit('presence:update', { userId, online: true });
+      }
+
       socket.emit('socket:ready', { status: 'online', socketId: socket.id });
 
       // Подключать к комнате можно только участников чата
@@ -108,6 +119,28 @@ const startServer = async () => {
 
       socket.on('leave-room', (chatId) => {
         if (chatId) socket.leave(chatId);
+      });
+
+      const relayTyping = (chatId, typing) => {
+        if (!chatId || !socket.rooms.has(String(chatId))) return;
+        socket.to(String(chatId)).emit('chat:typing', {
+          chatId: String(chatId),
+          userId,
+          typing
+        });
+      };
+
+      socket.on('typing-start', (chatId) => relayTyping(chatId, true));
+      socket.on('typing-stop', (chatId) => relayTyping(chatId, false));
+
+      socket.on('disconnect', () => {
+        const sockets = onlineUsers.get(userId);
+        if (!sockets) return;
+        sockets.delete(socket.id);
+        if (sockets.size === 0) {
+          onlineUsers.delete(userId);
+          io.emit('presence:update', { userId, online: false });
+        }
       });
     });
 

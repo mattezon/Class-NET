@@ -12,6 +12,11 @@ const chatSchema = new mongoose.Schema(
       trim: true,
       default: ''
     },
+    color: {
+      type: String,
+      trim: true,
+      default: ''
+    },
     participants: [{
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
@@ -22,6 +27,11 @@ const chatSchema = new mongoose.Schema(
       ref: 'User',
       default: null
     },
+    admins: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: []
+    }],
     lastMessage: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Message',
@@ -34,5 +44,7 @@ const chatSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+chatSchema.index({ participants: 1, updatedAt: -1 });
 
 module.exports = mongoose.model('Chat', chatSchema);

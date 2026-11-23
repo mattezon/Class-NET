@@ -21,9 +21,26 @@ const messageSchema = new mongoose.Schema(
     readBy: [{
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User'
+    }],
+    kind: {
+      type: String,
+      enum: ['text', 'system'],
+      default: 'text'
+    },
+    replyTo: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Message',
+      default: null
+    },
+    mentions: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
     }]
   },
   { timestamps: true }
 );
+
+messageSchema.index({ chat: 1, createdAt: -1 });
+messageSchema.index({ chat: 1, readBy: 1 });
 
 module.exports = mongoose.model('Message', messageSchema);
